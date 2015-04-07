@@ -1,0 +1,142 @@
+#
+# Makefile for a Loadable User Module (Common Part)
+#
+# Input:
+# $(GCC_TARGET)
+# $(MODCFG)
+# $(MODDIR)
+# $(MODOBJS)
+# $(KERNELDIR)
+# $(SRCDIRS)
+# $(LOADERDIR)
+# $(COPTS)
+#
+
+#
+# Tools
+#
+CFG := $(KERNELDIR)/cfg/cfg/cfg
+CFGLINK := $(GCC_TARGET)-gcc -nostartfiles
+NM := $(GCC_TARGET)-nm
+OBJCOPY := $(GCC_TARGET)-objcopy
+
+#
+# Process configuration files
+#
+
+CFG_TABS := --api-table $(LOADERDIR)/app/common/module_api.csv \
+			--cfg1-def-table $(LOADERDIR)/app/common/module_def.csv $(CFG_TABS)
+
+CFG1_OUT = cfg1_out
+
+cfg1_out.o: $(MODCFG)
+	$(CFG) --pass 1 --kernel hrp2 $(INCLUDES) $(CFG_TABS) $<
+	$(CFGLINK) $(CFLAGS) -nostartfiles cfg1_out.c -o cfg1_out.o
+
+CFG2_OUT_SRCS := kernel_cfg.h kernel_cfg.c kernel_mem2.c $(CFG2_OUT_SRCS)
+
+$(CFG2_OUT_SRCS): $(MODCFG) \
+						$(START_OBJS) cfg1_out.o $(END_OBJS) $(HIDDEN_OBJS)
+	$(CFGLINK) $(CFLAGS) $(CFG1_OUT_LDFLAGS) -o $(CFG1_OUT) \
+						$(START_OBJS) cfg1_out.o $(END_OBJS)
+	$(NM) -n $(CFG1_OUT) > cfg1_out.syms
+	$(OBJCOPY) -O srec -S $(CFG1_OUT) cfg1_out.srec
+	$(CFG) --pass 2 --kernel hrp2 $(INCLUDES) \
+				-T $(KERNELDIR)/kernel/kernel.tf $(CFG_TABS) $<
+	touch -r kernel_cfg.c kernel_cfg.timestamp
+
+CFG_OUT_SRCS := module_cfg.h module_cfg.c
+$(CFG_OUT_SRCS): $(MODCFG)
+	$(call print_cmd, "CFG[1]", $@)
+	@$(CFG) --pass 1 --kernel hrp2 $(INCLUDES) $(CFG_TABS) $<
+	@$(CFGLINK) $(CFLAGS) -Wl,-Ttext,0x00000000 -Wl,-e,0 -o cfg1_out.o cfg1_out.c
+	@$(CFGLINK) $(CFLAGS) $(CFG1_OUT_LDFLAGS) -Wl,-e,0 -o $(CFG1_OUT) cfg1_out.o
+	@$(NM) -n $(CFG1_OUT) > cfg1_out.syms
+	@$(OBJCOPY) -O srec -S $(CFG1_OUT) cfg1_out.srec
+	$(call print_cmd, "CFG[2]", $@)
+	@$(CFG) --pass 2 --kernel hrp2 $(INCLUDES) \
+	   -I$(TARGETDIR)/api -I $(LOADERDIR)/app/common \
+				-T $(LOADERDIR)/app/common/module.tf $(CFG_TABS) $<
+
+CLEAN_FILES += $(CFG1_OUT) cfg1_out.o cfg1_out.c cfg1_out.syms cfg1_out.srec $(CFG_OUT_SRCS)
+
+#CC = arm-none-eabi-gcc -fPIC -nostdlib -std=c99 -nostartfiles -fno-strict-aliasing -mcpu=arm926ej-s -mlittle-endian -D__TARGET_ARCH_ARM=5
+#LINK = arm-none-eabi-ld -nostdlib -nostartfiles
+#CC = arm-none-eabi-gcc -shared -fPIC -nostdlib -std=c99 -fno-strict-aliasing -mcpu=arm926ej-s -mlittle-endian -D__TARGET_ARCH_ARM=5
+CC = arm-none-eabi-gcc -fPIC -mno-pic-data-is-text-relative -nostdlib -std=gnu99 -fno-strict-aliasing -mcpu=arm926ej-s -mlittle-endian -D__TARGET_ARCH_ARM=5
+CXX = arm-none-eabi-g++ -fPIC -mno-pic-data-is-text-relative -nostdlib -std=gnu++11 -fno-strict-aliasing -mcpu=arm926ej-s -mlittle-endian -D__TARGET_ARCH_ARM=5
+#LINK = arm-none-eabi-ld -nostdlib -shared -fPIC
+
+# -n to make file size small
+#LINK = arm-none-eabi-ld -n -pie
+LINK = arm-none-eabi-gcc -Wl,-nmagic -nostdlib -pie
+
+LDSCRIPT = $(LOADERDIR)/app/app.ld
+
+#
+#  共通コンパイルオプションの定義
+#
+ifdef TEXT_START_ADDRESS
+  LDFLAGS := $(LDFLAGS) -Wl,-Ttext,$(TEXT_START_ADDRESS)
+  CFG1_OUT_LDFLAGS := $(CFG1_OUT_LDFLAGS) -Wl,-Ttext,$(TEXT_START_ADDRESS)
+endif
+ifdef DATA_START_ADDRESS
+  LDFLAGS := $(LDFLAGS) -Wl,-Tdata,$(DATA_START_ADDRESS)
+  CFG1_OUT_LDFLAGS := $(CFG1_OUT_LDFLAGS) -Wl,-Tdata,$(DATA_START_ADDRESS)
+endif
+ifdef LDSCRIPT
+  LDFLAGS := $(LDFLAGS) -T $(LDSCRIPT)
+  #CFG1_OUT_LDFLAGS := $(CFG1_OUT_LDFLAGS) -T $(LDSCRIPT)
+endif
+ifndef OMIT_DEBUG_INFO
+COPTS += -g
+endif
+ifndef OMIT_WARNING_ALL
+  COPTS := $(COPTS) -Wall
+endif
+ifndef OMIT_OPTIMIZATION
+  COPTS := $(COPTS) -O2
+endif
+CDEFS := $(CDEFS)
+INCLUDES += -I. -I$(KERNELDIR)/include -I$(KERNELDIR)/arch -I$(KERNELDIR) -I$(PWD)/include
+LDFLAGS := $(LDFLAGS)
+CFG1_OUT_LDFLAGS := $(CFG1_OUT_LDFLAGS)
+LIBS := $(LIBS) $(CXXLIBS)
+CFLAGS = $(COPTS) $(CDEFS) $(INCLUDES)
+
+#
+# Include source files
+#
+SRCDIRS += $(KERNELDIR)/library
+vpath %.c $(SRCDIRS)
+vpath %.cpp $(SRCDIRS)
+
+#
+# Object file
+#
+ALL_OBJS += module_cfg.o $(MODOBJS)
+ALL_CXXOBJS += $(APPL_CXXOBJS)
+ALL_LIBS += $(LIBS) $(APPL_LIBS)
+$(OBJFILE): $(CFG_OUT_SRCS) $(ALL_OBJS) $(ALL_CXXOBJS) $(WORKSPACE_LIB_TO_BUILD)
+	$(call print_cmd, "LD", $@)
+	@$(LINK) $(LDFLAGS) -o $(OBJFILE) $(ALL_OBJS) $(ALL_CXXOBJS) $(ALL_LIBS) -lm -lc -lgcc
+#arm-none-eabi-strip -K _module_cfg_entry_num -K _module_cfg_tab -K _module_pil_version --strip-all app
+    
+#
+# Function definitions
+#
+define print_cmd
+  @printf "  %-7s %s\n" $1 $2
+endef
+
+$(ALL_OBJS): %.o: %.c
+	$(call print_cmd, "CC", $<)
+	@$(CC) -c $(CFLAGS) $<
+
+$(ALL_CXXOBJS): %.o: %.cpp
+	$(call print_cmd, "CXX", $<)
+	@$(CXX) -c $(CFLAGS) $<
+
+.PHONY: clean
+clean:
+	rm -f $(CLEAN_FILES) \#* *~ *.o

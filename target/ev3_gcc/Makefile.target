@@ -1,0 +1,50 @@
+#
+#		Makefile のターゲット依存部（EV3用）
+#
+
+#
+#  ボード名，チップ名，コア名，開発環境名の定義
+#
+BOARD = EV3
+CHIP = am1808
+PRC  = arm
+TOOL = gcc
+
+# For Debugging
+# OMIT_OPTIMIZATION = true
+
+#
+#  各セグメントの開始アドレスの定義
+#
+TEXT_START_ADDRESS=0xC0008000
+DATA_START_ADDRESS=0xC0108000
+
+#
+#  コンパイルオプション
+#
+#CFG1_OUT_LDSCRIPT = $(SRCDIR)/arch/arm_gcc/common/cfg1_out.ld
+INCLUDES += -I$(TARGETDIR)
+
+#
+#  カーネルに関する定義
+#
+KERNEL_DIR += $(TARGETDIR)
+KERNEL_COBJS += target_config.o target_serial.o
+
+#
+#	Add all 'include' and 'src' by default
+#
+INCLUDES += $(foreach dir,$(shell find $(TARGETDIR) -type d -name include),-I$(dir))
+KERNEL_DIR += $(foreach dir,$(shell find $(TARGETDIR) -type d -name src),$(dir))
+
+#
+#  依存関係の定義
+#
+kernel_cfg.timestamp: $(TARGETDIR)/target.tf
+$(OBJFILE): $(TARGETDIR)/target_check.tf
+
+
+#
+#  チップ依存部のインクルード
+#
+include $(SRCDIR)/arch/$(PRC)_$(TOOL)/$(CHIP)/Makefile.chip

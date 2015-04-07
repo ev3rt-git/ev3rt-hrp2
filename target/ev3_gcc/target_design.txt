@@ -1,0 +1,30 @@
+=====================================================================
+                   EV3ターゲット依存部 設計メモ
+=====================================================================
+
+○データ型，定数，マクロの定義
+
+ev3.h:
+CORE_CLK_MHZ チップ(AM1808)のクロック周波数(MHz)
+OSCIN_MHZ    チップ(AM1808)のOSCIN周波数(MHz)
+
+Makefile.target:
+BOARD, CHIP, PRC, TOOL ボード名，チップ名，コア名，開発環境名の定義
+TEXT_START_ADDRESS     textセグメントの開始アドレスの定義
+DATA_START_ADDRESS     dataセグメントの開始アドレスの定義
+OMIT_OPTIMIZATION      For Debugging
+
+target_syssvc.h:
+LOGTASK_PORTID
+TASK_PORTID
+LOWLEVEL_PORTID
+
+target_test.h:
+TASK_PORTID
+
+○関数
+target_config.c/h:
+target_initialize
+target_exit
+
+以上．

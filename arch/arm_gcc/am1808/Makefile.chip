@@ -1,0 +1,96 @@
+#
+#		Makefile のチップ依存部（AM1808用）
+#
+
+#
+#  チップ名，コア名，開発環境名の定義
+#
+CHIP = am1808
+PRC  = arm
+TOOL = gcc
+
+CHIPDIR = $(SRCDIR)/arch/$(PRC)_$(TOOL)/$(CHIP)
+
+#
+#  GNU開発環境のターゲットアーキテクチャの定義
+#
+GCC_TARGET = arm-none-eabi
+
+#
+#  コンパイルオプション
+#
+INCLUDES := $(INCLUDES) -I$(CHIPDIR)
+COPTS += -mcpu=arm926ej-s -mlittle-endian
+LDFLAGS := $(LDFLAGS) -mcpu=arm926ej-s -nostdlib -mlittle-endian
+CDEFS := $(CDEFS) -D__TARGET_ARCH_ARM=5
+CFG1_OUT_LDFLAGS := $(CFG1_OUT_LDFLAGS) $(LDFLAGS) -N
+CFG2_OUT_LDFLAGS := $(CFG2_OUT_LDFLAGS) $(LDFLAGS) -N
+CFG3_OUT_LDFLAGS := $(CFG3_OUT_LDFLAGS) $(LDFLAGS) -N
+
+#
+#  カーネルに関する定義
+#
+KERNEL_DIR := $(KERNEL_DIR) $(CHIPDIR)
+KERNEL_ASMOBJS := $(KERNEL_ASMOBJS) chip_support.o
+KERNEL_COBJS := $(KERNEL_COBJS) chip_config.o chip_timer.o
+
+#
+#  トレースログ記録のサンプルコードに関する定義
+#
+ifeq ($(ENABLE_TRACE),true)
+      COPTS := $(COPTS) -DTOPPERS_ENABLE_TRACE
+      KERNEL_DIR := $(KERNEL_DIR) $(SRCDIR)/arch/logtrace
+      KERNEL_COBJS := $(KERNEL_COBJS) trace_config.o trace_dump.o
+endif
+
+#
+#  システムサービスに関する定義
+#
+SYSSVC_DIR := $(SYSSVC_DIR) 
+SYSSVC_COBJS := $(SYSSVC_COBJS) tl16c550.o
+
+#
+#  リンカスクリプトの定義
+#
+# DEF_HRP2_ONLY
+CFG1_OUT_LDSCRIPT = $(SRCDIR)/arch/$(PRC)_$(TOOL)/common/cfg1_out.ld
+CFG2_OUT_LDSCRIPT = cfg2_out.ld
+CFG3_OUT_LDSCRIPT = cfg3_out.ld
+LDSCRIPT = ldscript.ld
+CLEAN_FILES := $(CLEAN_FILES) $(CFG2_OUT_LDSCRIPT) $(CFG3_OUT_LDSCRIPT) $(LDSCRIPT)
+# END_HRP2_ONLY
+# DEF_ASP_ONLY
+# LDSCRIPT = $(CHIPDIR)/am1808.ld
+# END_ASP_ONLY
+
+#
+#  スタートアップモジュールに関する定義
+#
+#  START_OBJSをstart.oに設定し，LDFLAGSに-nostdlibを追加する．
+#
+START_OBJS = start.o
+
+$(START_OBJS): %.o: %.S
+	$(call print_cmd, "CC", $<)
+	@$(CC) -c $(CFLAGS) $(KERNEL_CFLAGS) $<
+
+$(START_OBJS:.o=.d): %.d: %.S
+	@$(PERL) $(SRCDIR)/utils/makedep -C $(CC) \
+		-O "$(CFLAGS) $(KERNEL_CFLAGS)" $< >> Makefile.depend
+
+#
+#  依存関係の定義
+#
+kernel_cfg.timestamp: $(CHIPDIR)/chip.tf
+kernel_mem3.c: $(CHIPDIR)/chip_opt.tf
+kernel_mem.c: $(CHIPDIR)/chip_mem.tf
+
+#
+#  コンフィギュレータ関係の変数の定義
+#
+CFG_TABS := $(CFG_TABS) --cfg1-def-table $(CHIPDIR)/chip_def.csv 
+
+#
+#  ARM依存部のインクルード
+#
+include $(SRCDIR)/arch/$(PRC)_$(TOOL)/common/Makefile.core

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?ccsproject version="1.0"?>
+
+<projectOptions>
+<deviceVariant value="TMS320C67XX.TMS320C6747.EVMC6747"/>
+<deviceFamily value="C6000"/>
+<deviceEndianness value="little"/>
+<codegenToolVersion value="7.3.4"/>
+<isElfFormat value="false"/>
+<connection value="common/targetdb/connections/TIXDS100usb_Connection.xml"/>
+<linkerCommandFile value="C6747.cmd"/>
+<rts value="libc.a"/>
+<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate,"/>
+</projectOptions>

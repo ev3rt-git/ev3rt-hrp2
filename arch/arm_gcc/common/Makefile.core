@@ -1,0 +1,55 @@
+#
+#		Makefile のコア依存部（ARM用）
+# 
+#  $Id: Makefile.core 876 2013-02-18 14:24:58Z ertl-hiro $
+#
+
+#
+#  コア依存部ディレクトリ名の定義
+#
+COREDIR = $(SRCDIR)/arch/$(PRC)_$(TOOL)/common
+
+#
+#  ツール依存部ディレクトリ名の定義 
+#
+TOOLDIR = $(SRCDIR)/arch/$(TOOL)
+
+#
+#  パス3を使用する
+#
+USE_CFG_PASS3 = true
+
+#
+#  コンパイルオプション
+#
+INCLUDES := $(INCLUDES) -I$(COREDIR) -I$(TOOLDIR)
+ifdef USE_CFG_PASS3
+	COPTS := $(COPTS) -DUSE_CFG_PASS3
+endif
+LIBS := $(LIBS) -lgcc
+
+#
+#  カーネルに関する定義
+#
+KERNEL_DIR := $(KERNEL_DIR) $(COREDIR)
+KERNEL_ASMOBJS := $(KERNEL_ASMOBJS) core_support.o
+KERNEL_COBJS := $(KERNEL_COBJS) core_config.o arm.o
+KERNEL_CFLAGS := $(KERNEL_CFLAGS) -DSUPPORT_XLOG_SYS
+
+#
+#  コンフィギュレータ関係の変数の定義
+#
+CFG_TABS := $(CFG_TABS) --cfg1-def-table $(COREDIR)/core_def.csv
+
+#
+#  オフセットファイル生成のための定義
+#
+OFFSET_TF = $(COREDIR)/core_offset.tf
+
+#
+#  依存関係の定義
+#
+cfg1_out.c: $(COREDIR)/core_def.csv
+kernel_cfg.timestamp: $(COREDIR)/core.tf
+kernel_mem3.c: $(COREDIR)/core_opt.tf
+kernel_mem.c: $(COREDIR)/core_mem.tf

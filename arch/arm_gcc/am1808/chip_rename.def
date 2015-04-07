@@ -1,0 +1,8 @@
+# chip_config.c
+x_config_int
+chip_initialize
+
+# kernel_cfg.c 
+cfgint_tbl
+
+INCLUDE "core"

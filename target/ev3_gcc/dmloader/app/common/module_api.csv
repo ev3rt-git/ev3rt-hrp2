@@ -1,0 +1,52 @@
+tsk,CRE_TSK,#tskid { .tskatr &exinf &task +itskpri .stksz &stk .sstksz? &sstk? },,
+invalidapi,DEF_TEX,%tskid { .texatr &texrtn },0,1
+invalidapi,SAC_TSK,%tskid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_TSK,.notsk,,
+sem,CRE_SEM,#semid { .sematr .isemcnt .maxsem },,
+invalidapi,SAC_SEM,%semid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_SEM,.nosem,,
+flg,CRE_FLG,#flgid { .flgatr .iflgptn },,
+invalidapi,SAC_FLG,%flgid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_FLG,.nosem,,
+invalidapi,CRE_DTQ,#dtqid { .dtqatr .dtqcnt &dtqmb },,
+invalidapi,SAC_DTQ,%dtqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_DTQ,.nodtq,,
+invalidapi,CRE_PDQ,#pdqid { .pdqatr .pdqcnt +maxdpri &pdqmb },,
+invalidapi,SAC_PDQ,%pdqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_PDQ,.nopdq,,
+invalidapi,CRE_MTX,#mtxid { .mtxatr +ceilpri? },,
+invalidapi,SAC_MTX,%mtxid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_MTX,.nomtx,,
+invalidapi,CRE_MPF,#mpfid { .mpfatr .blkcnt .blksz &mpf &mpfmb },,
+invalidapi,SAC_MPF,%mpfid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_MPF,.nompf,,
+invalidapi,CRE_CYC,#cycid { .cycatr &exinf &cychdr .cyctim .cycphs },,
+invalidapi,SAC_CYC,%cycid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_CYC,.nocyc,,
+invalidapi,CRE_ALM,#almid { .almatr &exinf &almhdr },,
+invalidapi,SAC_ALM,%almid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
+invalidapi,AID_ALM,.noalm,,
+invalidapi,DEF_OVR,{ .ovratr &ovrhdr },-1,
+invalidapi,SAC_SYS,{ .acptn1 .acptn2 .acptn3 .acptn4 },-1,
+invalidapi,ATT_REG,$region { .regatr .base .size },-1,
+invalidapi,DEF_SRG,$stdrom $stdram,-1,
+invalidapi,ATT_SEC,$section { .mematr $memreg },-1,
+sec,ATA_SEC,$section { .mematr $memreg } { .acptn1 .acptn2 .acptn3 .acptn4 },-1,
+invalidapi,LNK_SEC,$section { $memreg },-1,
+mod,ATT_MOD,$module,-1,
+invalidapi,ATA_MOD,$module { .acptn1 .acptn2 .acptn3 .acptn4 },-1,
+invalidapi,ATT_MEM,{ .mematr &base .size },-1,
+invalidapi,ATA_MEM,{ .mematr &base .size } { .acptn1 .acptn2 .acptn3 .acptn4 },-1,
+invalidapi,ATT_PMA,{ .mematr &base .size .paddr },-1,
+invalidapi,ATA_PMA,{ .mematr &base .size .paddr } { .acptn1 .acptn2 .acptn3 .acptn4 },-1,
+invalidapi,CFG_INT,.intno { .intatr +intpri },,
+invalidapi,ATT_ISR,{ .isratr &exinf .intno &isr +isrpri },-1,
+invalidapi,AID_ISR,.noisr,,
+invalidapi,DEF_INH,.inhno { .inhatr &inthdr },,
+invalidapi,DEF_EXC,.excno { .excatr &exchdr },,
+invalidapi,DEF_SVC,.fncd { .svcatr &svcrtn .stksz },,
+invalidapi,DEF_ICS,{ .istksz &istk },-1,
+invalidapi,DEF_KMM,{ .kmmsz &kmm },-1,
+invalidapi,ATT_INI,{ .iniatr &exinf &inirtn },-1,
+invalidapi,ATT_TER,{ .teratr &exinf &terrtn },-1,
+invalidapi,LMT_DOM,{ +mintpri },-1,
