@@ -15,6 +15,7 @@
 #
 # Tools
 #
+AR := $(GCC_TARGET)-ar
 CFG := $(KERNELDIR)/cfg/cfg/cfg
 CFGLINK := $(GCC_TARGET)-gcc -nostartfiles
 NM := $(GCC_TARGET)-nm
