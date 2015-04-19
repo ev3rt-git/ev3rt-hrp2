@@ -12,7 +12,7 @@
 #include "platform.h"
 
 #include "driver_debug.h"
-#include "ev3api.h"
+//#include "ev3api.h"
 
 /**
  * Portable snprintf() implementation from Linux kernel

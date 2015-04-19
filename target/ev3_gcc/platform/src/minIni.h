@@ -149,4 +149,6 @@ int  ini_browse(INI_CALLBACK Callback, const void *UserData, const mTCHAR *Filen
 #endif /* __WXWINDOWS__ */
 #endif /* __cplusplus */
 
+#define PORTABLE_STRNICMP
+
 #endif /* MININI_H */

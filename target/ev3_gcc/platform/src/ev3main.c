@@ -9,7 +9,7 @@
 #include "motor_dri.h"
 #include "uart_dri.h"
 #include "analog_dri.h"
-#include "ev3api.h"
+//#include "ev3api.h"
 
 #include <kernel.h>
 #include <t_stdlib.h>

@@ -8,4 +8,3 @@ $  チップ依存テンプレートのインクルード
 $ 
 $INCLUDE"chip.tf"$
 
-$INCLUDE"ev3api.tf"$
