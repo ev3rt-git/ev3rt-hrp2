@@ -16,26 +16,36 @@
 #include "fatfs_dri.h"
 #include "driver_common.h"
 
-#define DEBUG
+#define MENU_FRAME_BUF  ((bitmap_t *)(global_brick_info.lcd_screen))
+#define MENU_ENTRY_FONT ((font_t*)(global_brick_info.font_w10h16))
+#define MENU_PAGE_SIZE (6) // Maximum number of entries in a page
+#define MENU_OFFSET_Y (32) // Offset (Y) to draw menu entries
 
-#ifdef DEBUG
-#define _debug(x) (x)
-#else
-#define _debug(x)
-#endif
-
-//FILE *fio;
-
-#define MENU_OFFSET_Y (32)
-
-static void draw_menu_entry(const CliMenu *cm, int index, bool_t selected, int offset_x, int offset_y) {
-	font_t *font = global_brick_info.font_w10h16;
-	bitmap_t *screen = global_brick_info.lcd_screen;
-	bitmap_draw_string(cm->entry_tab[index].title, screen, offset_x + font->width + 2, offset_y + font->height * index, font, ROP_COPY);
+static void cli_menu_draw_entry(int index, const char *title, bool_t selected, int offset_x, int offset_y) {
+	font_t *font = MENU_ENTRY_FONT;
+	bitmap_t *screen = MENU_FRAME_BUF;
+	bitmap_draw_string(title, screen, offset_x + font->width + 2, offset_y + font->height * index, font, ROP_COPY);
 	if (selected)
 		bitmap_draw_string(">", screen, offset_x, offset_y + font->height * index, font, ROP_COPY);
 	else
 		bitmap_draw_string(" ", screen, offset_x, offset_y + font->height * index, font, ROP_COPY);
+}
+
+static void cli_menu_draw_page(const CliMenu *cm, uint32_t page) {
+	assert(cm->entry_num > 0);
+	uint32_t max_page = (cm->entry_num - 1) / MENU_PAGE_SIZE;
+	if (page > max_page) {
+		syslog(LOG_ERROR, "Page number %d out of range, use max_page=%d instead", page, max_page);
+		max_page = page;
+	}
+
+	// Clear
+	bitmap_bitblt(NULL, 0, 0, MENU_FRAME_BUF, 0, MENU_OFFSET_Y, MENU_FRAME_BUF->width, MENU_FRAME_BUF->height, ROP_CLEAR);
+
+	// Draw entries in the page
+	for (int i = 0, entry = page * MENU_PAGE_SIZE; i < MENU_PAGE_SIZE && entry < cm->entry_num; i++, entry++) {
+		cli_menu_draw_entry(i, cm->entry_tab[entry].title, false, 0, MENU_OFFSET_Y);
+	}
 }
 
 void show_cli_menu(const CliMenu *cm) {
@@ -59,76 +69,64 @@ void show_cli_menu(const CliMenu *cm) {
 	if (cm->msg) bitmap_draw_string(cm->msg, screen, 12/*x*/, y, font, ROP_COPY);
 	y += font->height;
 
-	// Draw options
-	bitmap_bitblt(NULL, 0, 0, screen, 0, y, screen->width, screen->height, ROP_CLEAR); // Clear
-	x = font->width + 10; // Left space for arrow
-    for(SIZE i = 0; i < cm->entry_num; ++i) {
-    	draw_menu_entry(cm, i, false, 0, y);
-//        syslog(LOG_NOTICE, "[%c] %s", cm->entry_tab[i].key, cm->entry_tab[i].title);
-    }
-
+	// Draw first page
+	cli_menu_draw_page(cm, 0);
 }
 
 const CliMenuEntry* select_menu_entry(const CliMenu *cm) {
 	int current = 0;
-//    syslog(LOG_NOTICE, "Please enter an option.");
 
-	bool_t select_finished = false;
-	while (!select_finished) {
-		draw_menu_entry(cm, current, true, 0, MENU_OFFSET_Y);
-		while(1) {
-			if (global_brick_info.button_pressed[BRICK_BUTTON_UP]) {
-				while(global_brick_info.button_pressed[BRICK_BUTTON_UP]);
-				draw_menu_entry(cm, current, false, 0, MENU_OFFSET_Y);
-				current = (current - 1) % cm->entry_num;
-				break;
-			}
-			if (global_brick_info.button_pressed[BRICK_BUTTON_DOWN]) {
-				while(global_brick_info.button_pressed[BRICK_BUTTON_DOWN]);
-				draw_menu_entry(cm, current, false, 0, MENU_OFFSET_Y);
-				current = (current + 1) % cm->entry_num;
-				break;
-			}
-			if (global_brick_info.button_pressed[BRICK_BUTTON_ENTER]) {
-				while(global_brick_info.button_pressed[BRICK_BUTTON_ENTER]);
-				select_finished = true;
-				break;
-			}
-			if (global_brick_info.button_pressed[BRICK_BUTTON_BACK]) {
-				while(global_brick_info.button_pressed[BRICK_BUTTON_BACK]);
-			    for(SIZE i = 0; i < cm->entry_num; ++i) {
-			        if(toupper(cm->entry_tab[i].key) == toupper((int8_t)'Q')) { // BACK => 'Q'
-			        	current = i;
-			        }
-			    }
-				select_finished = true;
-				break;
-			}
+	while (true) {
+		uint32_t page = current / MENU_PAGE_SIZE;
+
+		// Draw current selected entry
+		cli_menu_draw_entry(current % MENU_PAGE_SIZE, cm->entry_tab[current].title, true, 0, MENU_OFFSET_Y);
+
+		// Handle button events
+		if (global_brick_info.button_pressed[BRICK_BUTTON_UP]) {
+			while (global_brick_info.button_pressed[BRICK_BUTTON_UP]);
+			cli_menu_draw_entry(current % MENU_PAGE_SIZE, cm->entry_tab[current].title, false, 0, MENU_OFFSET_Y);
+			current = (current == 0) ? (cm->entry_num - 1) : (current - 1);
 		}
+		if (global_brick_info.button_pressed[BRICK_BUTTON_DOWN]) {
+			while (global_brick_info.button_pressed[BRICK_BUTTON_DOWN]);
+			cli_menu_draw_entry(current % MENU_PAGE_SIZE, cm->entry_tab[current].title, false, 0, MENU_OFFSET_Y);
+			current = (current + 1) % cm->entry_num;
+		}
+		if (global_brick_info.button_pressed[BRICK_BUTTON_ENTER]) {
+			while (global_brick_info.button_pressed[BRICK_BUTTON_ENTER]);
+			break;
+		}
+		if (global_brick_info.button_pressed[BRICK_BUTTON_BACK]) {
+			while (global_brick_info.button_pressed[BRICK_BUTTON_BACK]);
+			for (SIZE i = 0; i < cm->entry_num; ++i) {
+				if (toupper(cm->entry_tab[i].key) == toupper((int8_t) 'Q')) { // BACK => 'Q'
+					current = i;
+				}
+			}
+			break;
+		}
+
+		// Redraw page when necessary
+		if (page != current / MENU_PAGE_SIZE) cli_menu_draw_page(cm, current / MENU_PAGE_SIZE);
 	}
 
 	assert(current >= 0 && current < cm->entry_num);
 	return &cm->entry_tab[current];
-#if 0
-    char c;
-    SVC_PERROR(serial_rea_dat(SIO_PORT_DEFAULT, &c, 1));
-    for(SIZE i = 0; i < cm->entry_num; ++i) {
-        if(toupper(cm->entry_tab[i].key) == toupper((int8_t)c)) {
-            syslog(LOG_NOTICE, "Option '%c' is selected.", toupper((int8_t)c));
-            return &cm->entry_tab[i];
-        }
-    }
-
-
-    // Invalid key entered
-    //fio_clear_line();
-    syslog(LOG_NOTICE, "Option '%c' is invalid, please enter again.", c);
-    tslp_tsk(500);
-    return NULL;
-#endif
 }
 
 #if 0 // Legacy code (Loader cannot use API anymore)
+
+#define DEBUG
+
+#ifdef DEBUG
+#define _debug(x) (x)
+#else
+#define _debug(x)
+#endif
+
+//FILE *fio;
+
 void main_task(intptr_t unused) {
     while(!platform_is_ready());
     brick_misc_command(MISCCMD_SET_LED, TA_LED_GREEN);
@@ -291,4 +289,62 @@ void main_task(intptr_t unused) {
 //    	}
 //    }
 }
+
+const CliMenuEntry* select_menu_entry(const CliMenu *cm) {
+	...
+
+	bool_t select_finished = false;
+	while (!select_finished) {
+		draw_menu_entry(cm, current, true, 0, MENU_OFFSET_Y);
+		while(1) {
+			if (global_brick_info.button_pressed[BRICK_BUTTON_UP]) {
+				while(global_brick_info.button_pressed[BRICK_BUTTON_UP]);
+				draw_menu_entry(cm, current, false, 0, MENU_OFFSET_Y);
+				current = (current - 1) % cm->entry_num;
+				break;
+			}
+			if (global_brick_info.button_pressed[BRICK_BUTTON_DOWN]) {
+				while(global_brick_info.button_pressed[BRICK_BUTTON_DOWN]);
+				draw_menu_entry(cm, current, false, 0, MENU_OFFSET_Y);
+				current = (current + 1) % cm->entry_num;
+				break;
+			}
+			if (global_brick_info.button_pressed[BRICK_BUTTON_ENTER]) {
+				while(global_brick_info.button_pressed[BRICK_BUTTON_ENTER]);
+				select_finished = true;
+				break;
+			}
+			if (global_brick_info.button_pressed[BRICK_BUTTON_BACK]) {
+				while(global_brick_info.button_pressed[BRICK_BUTTON_BACK]);
+			    for(SIZE i = 0; i < cm->entry_num; ++i) {
+			        if(toupper(cm->entry_tab[i].key) == toupper((int8_t)'Q')) { // BACK => 'Q'
+			        	current = i;
+			        }
+			    }
+				select_finished = true;
+				break;
+			}
+		}
+	}
+	...
+}
+
+#if 0
+    char c;
+    SVC_PERROR(serial_rea_dat(SIO_PORT_DEFAULT, &c, 1));
+    for(SIZE i = 0; i < cm->entry_num; ++i) {
+        if(toupper(cm->entry_tab[i].key) == toupper((int8_t)c)) {
+            syslog(LOG_NOTICE, "Option '%c' is selected.", toupper((int8_t)c));
+            return &cm->entry_tab[i];
+        }
+    }
+
+
+    // Invalid key entered
+    //fio_clear_line();
+    syslog(LOG_NOTICE, "Option '%c' is invalid, please enter again.", c);
+    tslp_tsk(500);
+    return NULL;
+#endif
+
 #endif

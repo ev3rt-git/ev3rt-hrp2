@@ -78,7 +78,7 @@ void load_bootapp() {
 
 static
 void test_sd_loader(intptr_t unused) {
-#define TMAX_FILE_NUM (9)
+#define TMAX_FILE_NUM (100)
 
 	static FILINFO fileinfos[TMAX_FILE_NUM];
 	static char    filenames[TMAX_FILE_NUM][_MAX_LFN + 1];

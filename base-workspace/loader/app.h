@@ -68,10 +68,6 @@
  */
 #ifndef TOPPERS_MACRO_ONLY
 
-//#include <stdio.h>
-
-//extern FILE *fio;
-
 /**
  * CLI Menu
  */
@@ -94,8 +90,6 @@ extern void show_cli_menu(const CliMenu *cm);
 extern const CliMenuEntry* select_menu_entry(const CliMenu *cm);
 
 #define fio_clear_screen() {} //syslog(LOG_NOTICE, "\033[2J\033[;H") //fprintf(fio, "\033[2J\033[;H") // Clear Screen
-
-#define fio_clear_line() {} //syslog(LOG_NOTICE, "\033[2K\033[255D") //fprintf(fio, "\033[2K\033[255D") // Clear Screen
 
 extern const CliMenu climenu_main;
 
@@ -120,3 +114,9 @@ void ldr_prefetch_handler(void *p_excinf);
 void ldr_data_abort_handler(void *p_excinf);
 
 #endif /* TOPPERS_MACRO_ONLY */
+
+#if 0 // Legacy code
+//#include <stdio.h>
+//extern FILE *fio;
+#define fio_clear_line() {} //syslog(LOG_NOTICE, "\033[2K\033[255D") //fprintf(fio, "\033[2K\033[255D") // Clear Screen
+#endif
