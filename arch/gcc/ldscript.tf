@@ -4,7 +4,7 @@ $   TOPPERS/HRP Kernel
 $       Toyohashi Open Platform for Embedded Real-Time Systems/
 $       High Reliable system Profile Kernel
 $
-$   Copyright (C) 2007-2013 by Embedded and Real-Time Systems Laboratory
+$   Copyright (C) 2007-2015 by Embedded and Real-Time Systems Laboratory
 $               Graduate School of Information Science, Nagoya Univ., JAPAN
 $  
 $   上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,7 +36,7 @@ $   に対する適合性も含めて，いかなる保証も行わない．ま�
 $   アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
 $   の責任を負わない．
 $
-$   $Id: ldscript.tf 898 2013-06-09 01:23:45Z ertl-hiro $
+$   $Id: ldscript.tf 1031 2015-04-21 15:41:28Z ertl-hiro $
 $  
 $ =====================================================================
 
@@ -102,6 +102,7 @@ $ELSE$
 $END$
 
 $FOREACH moid MO_ORDER$
+	$end_label_hook = 0$
 	$IF MO.LINKER[moid]$
 $		// セクションの開始記述の生成
 		$IF (MO.SEFLAG[moid] & 0x01) != 0$
@@ -164,14 +165,7 @@ $		// リンクするファイル記述の生成
 			$END$
 			($section_dscr$)$SPC$
 		$ELIF MO.TYPE[moid] == TOPPERS_ATTSEC$
-$     // Workaround to support .init section -- ertl-liyixiao
-$IF EQ(section_dscr,".init_array")$
-            PROVIDE_HIDDEN (__init_array_start = .);
-$END$
 			*($section_dscr$)$SPC$
-$IF EQ(section_dscr,".init_array")$
-            PROVIDE_HIDDEN (__init_array_end = .);
-$END$
 		$ELSE$
 $			// ユーザスタック領域
 			kernel_cfg.o($section_dscr$)$SPC$
@@ -180,12 +174,20 @@ $			// ユーザスタック領域
 $		// セクションとメモリオブジェクトの終了ラベルの生成
 		$IF (MO.SEFLAG[moid] & 0x08) != 0$
 			$NL$
-			$IF !EQ(MO.MLABEL[moid], MO.SLABEL[moid])$
-				$TAB$$TAB$$PREFIX_END$$MO.MLABEL[moid]$ = .;$NL$
+			$IF LENGTH(FIND(END_LABEL_HOOK_LABELS, MO.MLABEL[moid]))$
+				$end_label_hook = 1$
+			$ELSE$
+				$IF !EQ(MO.MLABEL[moid], MO.SLABEL[moid])$
+					$TAB$$TAB$$PREFIX_END$$MO.MLABEL[moid]$ = .;$NL$
+				$END$
 			$END$
 		$END$
 		$IF (MO.SEFLAG[moid] & 0x02) != 0$
-			$TAB$$TAB$$PREFIX_END$$MO.SLABEL[moid]$ = .;$NL$
+			$IF LENGTH(FIND(END_LABEL_HOOK_LABELS, MO.SLABEL[moid]))$
+				$end_label_hook = 1$
+			$ELSE$
+				$TAB$$TAB$$PREFIX_END$$MO.SLABEL[moid]$ = .;$NL$
+			$END$
 		$END$
 		$IF (MO.SEFLAG[moid] & 0x200) != 0$
 			$IF (MO.MEMATR[moid] & TA_SDATA) == 0$
@@ -210,6 +212,11 @@ $		// セクションの終了記述の生成
 			$IF !OMIT_IDATA && !EQ(MO.ILABEL[moid], "")$
 				$TAB$$PREFIX_START$$MO.ILABEL[moid]$ = LOADADDR(.$MO.SLABEL[moid]$);$NL$
 			$END$
+		$END$
+
+$		// 共有リードオンリー領域の最後の特殊処理
+		$IF end_label_hook$
+			$END_LABEL_HOOK()$
 		$END$
 
 $		// アライン記述の生成

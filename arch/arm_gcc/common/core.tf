@@ -4,7 +4,7 @@ $   TOPPERS/HRP Kernel
 $       Toyohashi Open Platform for Embedded Real-Time Systems/
 $       High Reliable system Profile Kernel
 $
-$   Copyright (C) 2011-2012 by Embedded and Real-Time Systems Laboratory
+$   Copyright (C) 2011-2015 by Embedded and Real-Time Systems Laboratory
 $               Graduate School of Information Science, Nagoya Univ., JAPAN
 $  
 $   上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -36,7 +36,7 @@ $   に対する適合性も含めて，いかなる保証も行わない．ま�
 $   アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
 $   の責任を負わない．
 $
-$   $Id: core.tf 865 2013-02-10 08:44:43Z ertl-hiro $
+$   $Id: core.tf 1032 2015-05-09 19:58:03Z ertl-hiro $
 $  
 $ =====================================================================
 
@@ -96,6 +96,7 @@ $
 $FUNCTION ALLOC_SSTACK$
 	static STK_T $ARGV[1]$[COUNT_STK_T($ARGV[2]$)]
 	$SPC$__attribute__((section(".prsv_kernel"),nocommon));$NL$
+	$RESULT = FORMAT("ROUND_STK_T(%1%)", ARGV[2])$
 $END$
 
 $
@@ -148,6 +149,39 @@ $FUNCTION SECTION_DESCRIPTION$
 	$ELSE$
 		$RESULT = ARGV[1]$
 	$END$
+$END$
+
+$END_LABEL_HOOK_LABELS = { "rodata_shared", "rodata_shared__std" }$
+
+$FUNCTION END_LABEL_HOOK$
+	$TAB$.preinit_array ALIGN(4) : {$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__preinit_array_start = .);$NL$
+	$TAB$$TAB$KEEP (*(.preinit_array))$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__preinit_array_end = .);$NL$
+	$TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
+
+	$TAB$.init_array ALIGN(4) : {$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__init_array_start = .);$NL$
+	$TAB$$TAB$KEEP (*(SORT(.init_array.*)))$NL$
+	$TAB$$TAB$KEEP (*(.init_array))$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__init_array_end = .);$NL$
+	$TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
+
+	$TAB$.fini_array ALIGN(4) : {$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__fini_array_start = .);$NL$
+	$TAB$$TAB$KEEP (*(SORT(.fini_array.*)))$NL$
+	$TAB$$TAB$KEEP (*(.fini_array))$NL$
+	$TAB$$TAB$PROVIDE_HIDDEN (__fini_array_end = .);$NL$
+	$TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
+
+	$TAB$.ARM.exidx ALIGN(4) : {$NL$
+	$TAB$$TAB$__exidx_start = .;$NL$
+	$TAB$$TAB$*(.ARM.exidx* .gnu.linkonce.armexidx.*)$NL$
+	$TAB$$TAB$__exidx_end = .;$NL$
+	$TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
+
+	$TAB$__end_rodata_shared__std = .;$NL$
+	$TAB$__end_rodata_shared = .;$NL$
 $END$
 
 $
@@ -281,12 +315,6 @@ $FUNCTION GENERATE_SECTION_FIRST$
 	$TAB$$TAB$*(.vector)$NL$
 	$TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
 	$NL$
-    $TAB$.ARM.exidx : {$NL$
-    $TAB$$TAB$__exidx_start = .;$NL$
-    $TAB$$TAB$*(.ARM.exidx* .gnu.linkonce.armexidx.*)$NL$
-    $TAB$$TAB$__exidx_end = .;$NL$
-    $TAB$} > $REG.REGNAME[STANDARD_ROM]$$NL$
-    $NL$
 $END$
 
 $

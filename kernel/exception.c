@@ -37,7 +37,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: exception.c 623 2012-05-13 03:41:36Z ertl-hiro $
+ *  $Id: exception.c 1007 2014-05-27 03:11:55Z ertl-hiro $
  */
 
 /*
@@ -106,7 +106,7 @@ xsns_dpn(void *p_excinf)
 	bool_t	state;
 
 	LOG_XSNS_DPN_ENTER(p_excinf);
-	state = (sense_context() && exc_sense_intmask(p_excinf)
+	state = (kerflg && sense_context() && exc_sense_intmask(p_excinf)
 									&& !disdsp) ? false : true;
 	LOG_XSNS_DPN_LEAVE(state);
 	return(state);
@@ -129,7 +129,8 @@ xsns_xpn(void *p_excinf)
 	bool_t	state = true;
 
 	LOG_XSNS_XPN_ENTER(p_excinf);
-	if (sense_context() && exc_sense_intmask(p_excinf) && p_runtsk->enatex) {
+	if (kerflg && sense_context() && exc_sense_intmask(p_excinf)
+												&& p_runtsk->enatex) {
 		if (p_runtsk->p_tinib->p_dominib == &dominib_kernel) {
 			if (p_runtsk->svclevel == 0U) {
 				state = false;

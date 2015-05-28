@@ -3,7 +3,7 @@
  *      Toyohashi Open Platform for Embedded Real-Time Systems/
  *      High Reliable system Profile Kernel
  * 
- *  Copyright (C) 2005-2014 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2005-2015 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -35,7 +35,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: mutex.c 994 2014-04-18 08:48:40Z ertl-hiro $
+ *  $Id: mutex.c 1030 2015-03-28 09:28:54Z ertl-hiro $
  */
 
 /*
@@ -395,7 +395,7 @@ mutex_release_all(TCB *p_tcb)
 #endif /* TOPPERS_mtxrela */
 
 /*
- *  データキューの生成
+ *  ミューテックスの生成
  */
 #ifdef TOPPERS_acre_mtx
 
@@ -411,10 +411,15 @@ acre_mtx(const T_CMTX *pk_cmtx)
 	LOG_ACRE_MTX_ENTER(pk_cmtx);
 	CHECK_TSKCTX_UNL();
 	CHECK_MACV_READ(pk_cmtx, T_CMTX);
-	CHECK_RSATR(pk_cmtx->mtxatr, TA_TPRI|TA_CEILING|TA_DOMMASK);
+	if ((pk_cmtx->mtxatr & MTXPROTO_MASK) == TA_CEILING) {
+		CHECK_RSATR(pk_cmtx->mtxatr, TA_CEILING|TA_DOMMASK);
+		CHECK_TPRI(pk_cmtx->ceilpri);
+	}
+	else {
+		CHECK_RSATR(pk_cmtx->mtxatr, TA_TPRI|TA_DOMMASK);
+	}
 	domid = get_atrdomid(pk_cmtx->mtxatr);
 	CHECK_ATRDOMID_INACTIVE(domid);
-	CHECK_TPRI(pk_cmtx->ceilpri);
 	CHECK_ACPTN(sysstat_acvct.acptn3);
 
 	t_lock_cpu();
@@ -447,7 +452,7 @@ acre_mtx(const T_CMTX *pk_cmtx)
 #endif /* TOPPERS_acre_mtx */
 
 /*
- *  データキューのアクセス許可ベクタの設定
+ *  ミューテックスのアクセス許可ベクタの設定
  */
 #ifdef TOPPERS_sac_mtx
 
@@ -488,9 +493,8 @@ sac_mtx(ID mtxid, const ACVCT *p_acvct)
 
 #endif /* TOPPERS_sac_mtx */
 
-//★以下，未完成★
 /*
- *  データキューの削除
+ *  ミューテックスの削除
  */
 #ifdef TOPPERS_del_mtx
 
@@ -586,7 +590,7 @@ loc_mtx(ID mtxid)
 		ercd = E_OK;
 	}
 	else if (p_mtxcb->p_loctsk == p_runtsk) {
-		ercd = E_ILUSE;
+		ercd = E_OBJ;
 	}
 	else if (p_runtsk->waifbd) {
 		ercd = E_RLWAI;
@@ -643,7 +647,7 @@ ploc_mtx(ID mtxid)
 		ercd = E_OK;
 	}
 	else if (p_mtxcb->p_loctsk == p_runtsk) {
-		ercd = E_ILUSE;
+		ercd = E_OBJ;
 	}
 	else {
 		ercd = E_TMOUT;
@@ -697,7 +701,7 @@ tloc_mtx(ID mtxid, TMO tmout)
 		ercd = E_OK;
 	}
 	else if (p_mtxcb->p_loctsk == p_runtsk) {
-		ercd = E_ILUSE;
+		ercd = E_OBJ;
 	}
 	else if (tmout == TMO_POL) {
 		ercd = E_TMOUT;
@@ -746,7 +750,7 @@ unl_mtx(ID mtxid)
 		ercd = E_OACV;
 	}
 	else if (p_mtxcb->p_loctsk != p_runtsk) {
-		ercd = E_ILUSE;
+		ercd = E_OBJ;
 	}
 	else {
 		queue_delete(&(p_mtxcb->mutex_queue));
@@ -838,6 +842,7 @@ ref_mtx(ID mtxid, T_RMTX *pk_rmtx)
 	LOG_REF_MTX_ENTER(mtxid, pk_rmtx);
 	CHECK_TSKCTX_UNL();
 	CHECK_MTXID(mtxid);
+	CHECK_MACV_WRITE(pk_rmtx, T_RMTX);
 	p_mtxcb = get_mtxcb(mtxid);
 
 	t_lock_cpu();
