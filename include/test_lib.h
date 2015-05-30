@@ -3,7 +3,7 @@
  *      Toyohashi Open Platform for Embedded Real-Time Systems/
  *      High Reliable system Profile Kernel
  * 
- *  Copyright (C) 2005-2013 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2005-2015 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -35,7 +35,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: test_lib.h 940 2013-10-13 12:49:45Z ertl-hiro $
+ *  $Id: test_lib.h 1027 2015-02-08 10:27:44Z ertl-hiro $
  */
 
 /* 
@@ -49,6 +49,7 @@
 extern "C" {
 #endif
 
+#include <t_syslog.h>
 #include <extsvc_fncode.h>
 
 /*
@@ -63,6 +64,14 @@ extern "C" {
 #ifndef SSZ_TEST_CHECK_POINT
 #define SSZ_TEST_CHECK_POINT	1024
 #endif /* SSZ_TEST_CHECK_POINT */
+
+#ifndef SSZ_TEST_CHECK_ASSERT_ERROR
+#define SSZ_TEST_CHECK_ASSERT_ERROR	1024
+#endif /* SSZ_TEST_CHECK_ASSERT_ERROR */
+
+#ifndef SSZ_TEST_CHECK_ERCD_ERROR
+#define SSZ_TEST_CHECK_ERCD_ERROR	1024
+#endif /* SSZ_TEST_CHECK_ERCD_ERROR */
 
 #ifndef SSZ_TEST_SET_BIT_FUNC
 #define SSZ_TEST_SET_BIT_FUNC	1024
@@ -82,42 +91,6 @@ extern "C" {
 typedef ER (*BIT_FUNC)(void);
 
 /*
- *	完了チェックポイント
- */
-extern void	check_finish(uint_t count);
-
-/*
- *	条件チェック
- */
-extern void	_check_assert(const char *expr, const char *file, int_t line);
-#define check_assert(exp) \
-	((void)(!(exp) ? (_check_assert(#exp, __FILE__, __LINE__), 0) : 0))
-
-/*
- *	エラーコードチェック
- */
-extern void	_check_ercd(ER ercd, const char *file, int_t line);
-#define check_ercd(ercd, expected_ercd) \
-	((void)((ercd) != (expected_ercd) ? \
-					(_check_ercd(ercd, __FILE__, __LINE__), 0) : 0))
-
-/*
- *	システム状態のチェック（タスクコンテキスト用）
- *
- *  システム状態に対する参照操作が許可されていないタスクからは，この関
- *  数を用いることはできない．非タスクコンテキスト用のシステム状態の
- *  チェック（check_state_i）を用いることはできる．
- */
-extern void check_state(bool_t ctx, bool_t loc, PRI ipm, bool_t dsp,
-												bool_t dpn, bool_t tex);
-
-/*
- *	システム状態のチェック（非タスクコンテキスト用）
- */
-extern void check_state_i(bool_t ctx, bool_t loc, bool_t dsp,
-												bool_t dpn, bool_t tex);
-
-/*
  *  テストプログラム用ライブラリの拡張サービスコールによる呼出しインタ
  *  フェース
  */
@@ -133,6 +106,26 @@ check_point(uint_t count)
 }
 
 /*
+ *	条件チェックエラー
+ */
+Inline void
+check_assert_error(const char *expr, const char *file, int_t line)
+{
+	(void) cal_svc(TFN_TEST_CHECK_ASSERT_ERROR, (intptr_t) expr,
+									(intptr_t) file, (intptr_t) line, 0, 0);
+}
+
+/*
+ *	エラーコードチェックエラー
+ */
+Inline void
+check_ercd_error(ER ercd, const char *file, int_t line)
+{
+	(void) cal_svc(TFN_TEST_CHECK_ERCD_ERROR, (intptr_t) ercd,
+									(intptr_t) file, (intptr_t) line, 0, 0);
+}
+
+/*
  *	自己診断関数の設定
  */
 Inline void
@@ -140,11 +133,6 @@ set_bit_func(BIT_FUNC bit_func)
 {
 	(void) cal_svc(TFN_TEST_SET_BIT_FUNC, (intptr_t) bit_func, 0, 0, 0, 0);
 }
-
-/*
- *  テストプログラムの開始
- */
-extern void	test_start(char *progname);
 
 /*
  *  システムログの出力処理
@@ -170,31 +158,118 @@ test_finish(void)
  *  テストプログラム用ライブラリの関数呼出しによる呼出しインタフェース
  */
 extern void	_test_check_point(uint_t count) throw();
+extern void _test_check_assert_error(const char *expr,
+							 const char *file, int_t line) throw();
+extern void _test_check_ercd_error(ER ercd,
+							 const char *file, int_t line) throw();
 extern void	_test_set_bit_func(BIT_FUNC bit_func) throw();
 extern void	_test_syslog_flush(void) throw();
 extern void	_test_test_finish(void) throw();
 
 #ifdef TOPPERS_SVC_CALL
-#define check_point		_test_check_point
-#define set_bit_func	_test_set_bit_func
-#define syslog_flush	_test_syslog_flush
-#define test_finish		_test_test_finish
+#define check_point			_test_check_point
+#define check_assert_error	_test_check_assert_error
+#define check_ercd_error	_test_check_ercd_error
+#define set_bit_func		_test_set_bit_func
+#define syslog_flush		_test_syslog_flush
+#define test_finish			_test_test_finish
 #endif /* TOPPERS_SVC_CALL */
+
+/*
+ *  テストプログラムの開始
+ */
+Inline void
+test_start(char *progname)
+{
+	syslog_1(LOG_NOTICE, "Test program: %s", progname);
+}
+
+/*
+ *	完了チェックポイント
+ */
+Inline void
+check_finish(uint_t count)
+{
+	check_point(count);
+	syslog_0(LOG_NOTICE, "All check points passed.");
+	test_finish();
+}
+
+/*
+ *	条件チェック
+ */
+#define check_assert(exp) \
+	((void)(!(exp) ? (check_assert_error(#exp, __FILE__, __LINE__), 0) : 0))
+
+/*
+ *	エラーコードチェック
+ */
+#define check_ercd(ercd, expected_ercd) \
+	((void)((ercd) != (expected_ercd) ? \
+					(check_ercd_error(ercd, __FILE__, __LINE__), 0) : 0))
+
+/*
+ *	システム状態のチェック（タスクコンテキスト用）
+ *
+ *  システム状態に対する参照操作が許可されていないタスクからは，この関
+ *  数を用いることはできない．非タスクコンテキスト用のシステム状態の
+ *  チェック（check_state_i）を用いることはできる．
+ */
+Inline void
+check_state(bool_t ctx, bool_t loc, PRI ipm, bool_t dsp,
+										bool_t dpn, bool_t tex)
+{
+	PRI		intpri;
+	ER		ercd;
+
+	check_assert(sns_ctx() == ctx);
+	check_assert(sns_loc() == loc);
+	if (!loc) {
+		/*
+		 *  IPMのチェックは，CPUロック解除状態の場合にのみ行う．
+		 */
+		ercd = get_ipm(&intpri);
+		check_ercd(ercd, E_OK);
+		check_assert(intpri == ipm);
+	}
+	check_assert(sns_dsp() == dsp);
+	check_assert(sns_dpn() == dpn);
+	check_assert(sns_tex() == tex);
+}
+
+/*
+ *	システム状態のチェック（非タスクコンテキスト用）
+ */
+Inline void
+check_state_i(bool_t ctx, bool_t loc, bool_t dsp, bool_t dpn, bool_t tex)
+{
+	check_assert(sns_ctx() == ctx);
+	check_assert(sns_loc() == loc);
+	check_assert(sns_dsp() == dsp);
+	check_assert(sns_dpn() == dpn);
+	check_assert(sns_tex() == tex);
+}
 
 /*
  *  テストプログラム用ライブラリを拡張サービスコールとして登録するため
  *  の定義
  */
-extern ER_UINT	extsvc_check_point(intptr_t portid, intptr_t par2,
+extern ER_UINT	extsvc_check_point(intptr_t count, intptr_t par2,
 									intptr_t par3, intptr_t par4,
 									intptr_t par5, ID cdmid) throw();
-extern ER_UINT	extsvc_set_bit_func(intptr_t portid, intptr_t par2,
+extern ER_UINT	extsvc_check_assert_error(intptr_t expr, intptr_t file,
+									intptr_t line, intptr_t par4,
+									intptr_t par5, ID cdmid) throw();
+extern ER_UINT	extsvc_check_ercd_error(intptr_t ercd, intptr_t file,
+									intptr_t line, intptr_t par4,
+									intptr_t par5, ID cdmid) throw();
+extern ER_UINT	extsvc_set_bit_func(intptr_t bit_func, intptr_t par2,
 									intptr_t par3, intptr_t par4,
 									intptr_t par5, ID cdmid) throw();
-extern ER_UINT	extsvc_syslog_flush(intptr_t portid, intptr_t par2,
+extern ER_UINT	extsvc_syslog_flush(intptr_t par1, intptr_t par2,
 									intptr_t par3, intptr_t par4,
 									intptr_t par5, ID cdmid) throw();
-extern ER_UINT	extsvc_test_finish(intptr_t portid, intptr_t par2,
+extern ER_UINT	extsvc_test_finish(intptr_t par1, intptr_t par2,
 									intptr_t par3, intptr_t par4,
 									intptr_t par5, ID cdmid) throw();
 

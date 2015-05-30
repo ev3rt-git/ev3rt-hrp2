@@ -37,7 +37,7 @@ $   に対する適合性も含めて，いかなる保証も行わない．ま�
 $   アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
 $   の責任を負わない．
 $
-$   $Id: kernel.tf 1003 2014-04-23 11:58:48Z ertl-hiro $
+$   $Id: kernel.tf 1019 2014-11-24 00:25:32Z ertl-hiro $
 $
 $ =====================================================================
 
@@ -730,7 +730,9 @@ $  システムスタック領域の確保関数
 $
 $IF !ISFUNCTION("ALLOC_SSTACK")$
 $FUNCTION ALLOC_SSTACK$
+$	// 大きい方に丸めたサイズで確保する
 	static STK_T $ARGV[1]$[COUNT_STK_T($ARGV[2]$)];$NL$
+	$RESULT = FORMAT("ROUND_STK_T(%1%)", ARGV[2])$
 $END$
 $END$
 
@@ -834,8 +836,8 @@ $				// システムスタック領域のサイズを求める
 			$END$
 
 $			// システムスタック領域の確保
-			$ALLOC_SSTACK(CONCAT("_kernel_sstack_", tskid), sstksz)$
-			$TSK.TINIB_SSTKSZ[tskid] = FORMAT("ROUND_STK_T(%1%)", sstksz)$
+			$TSK.TINIB_SSTKSZ[tskid] = ALLOC_SSTACK(CONCAT("_kernel_sstack_",
+															tskid), sstksz)$
 			$TSK.TINIB_SSTK[tskid] = CONCAT("_kernel_sstack_", tskid)$
 		$ELSE$
 $			// stkがNULLでない場合の処理
@@ -879,8 +881,8 @@ $				// システムスタック領域のサイズを求める
 			$END$
 
 $			// システムスタック領域の確保
-			$ALLOC_SSTACK(CONCAT("_kernel_sstack_", tskid), sstksz)$
-			$TSK.TINIB_SSTKSZ[tskid] = FORMAT("ROUND_STK_T(%1%)", sstksz)$
+			$TSK.TINIB_SSTKSZ[tskid] = ALLOC_SSTACK(CONCAT("_kernel_sstack_",
+															tskid), sstksz)$
 			$TSK.TINIB_SSTK[tskid] = CONCAT("_kernel_sstack_", tskid)$
 		$ELSE$
 $			// sstkが省略されておらず，NULLでない場合の処理
@@ -2149,8 +2151,8 @@ $	// DEF_ICSがない場合のデフォルト値の設定
 	$NL$
 	#else /* DEAULT_ISTK */$NL$
 	$NL$
-	$ALLOC_SSTACK("_kernel_istack", "DEFAULT_ISTKSZ")$
-	#define TOPPERS_ISTKSZ		ROUND_STK_T(DEFAULT_ISTKSZ)$NL$
+	$istksz = ALLOC_SSTACK("_kernel_istack", "DEFAULT_ISTKSZ")$$NL$
+	#define TOPPERS_ISTKSZ		$istksz$$NL$
 	#define TOPPERS_ISTK		_kernel_istack$NL$
 	$NL$
 	#endif /* DEAULT_ISTK */$NL$
@@ -2180,8 +2182,8 @@ $ 	// istkszがスタック領域のサイズとして正しくない場合（E_
 
 	$IF EQ(ICS.ISTK[1], "NULL")$
 $		// スタック領域の自動割付け
-		$ALLOC_SSTACK("_kernel_istack", ICS.ISTKSZ[1])$
-		#define TOPPERS_ISTKSZ		ROUND_STK_T($ICS.ISTKSZ[1]$)$NL$
+		$istksz = ALLOC_SSTACK("_kernel_istack", ICS.ISTKSZ[1])$$NL$
+		#define TOPPERS_ISTKSZ		$istksz$$NL$
 		#define TOPPERS_ISTK		_kernel_istack$NL$
 	$ELSE$
 		#define TOPPERS_ISTKSZ		($ICS.ISTKSZ[1]$)$NL$

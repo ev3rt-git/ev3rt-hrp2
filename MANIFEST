@@ -1,5 +1,5 @@
 PACKAGE hrp2
-VERSION 2.2.0
+VERSION 2.2.1
 
 configure
 MANIFEST
@@ -87,7 +87,6 @@ library/histogram.c
 library/log_output.c
 library/strerror.c
 library/t_perror.c
-library/test_lib.c
 library/vasyslog.c
 
 sample/Makefile

@@ -28,6 +28,7 @@ messagebuf/kernel/task_refer.c
 messagebuf/kernel/wait.c
 messagebuf/kernel/wait.h
 
+messagebuf/test/bit_kernel.c
 messagebuf/test/test_messagebuf1.c
 messagebuf/test/test_messagebuf1.cfg
 messagebuf/test/test_messagebuf1.h

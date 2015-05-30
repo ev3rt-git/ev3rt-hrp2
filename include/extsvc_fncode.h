@@ -2,7 +2,7 @@
  *  TOPPERS Software
  *      Toyohashi Open Platform for Embedded Real-Time Systems
  * 
- *  Copyright (C) 2006-2012 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2006-2015 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -34,7 +34,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: extsvc_fncode.h 743 2012-08-24 01:52:09Z ertl-hiro $
+ *  $Id: extsvc_fncode.h 1027 2015-02-08 10:27:44Z ertl-hiro $
  */
 
 /*
@@ -71,9 +71,11 @@
 /*
  *  テストプログラム用ライブラリ
  */
-#define TFN_TEST_CHECK_POINT	(16)
-#define TFN_TEST_SET_BIT_FUNC	(17)
-#define TFN_TEST_SYSLOG_FLUSH	(18)
-#define TFN_TEST_TEST_FINISH	(19)
+#define TFN_TEST_CHECK_POINT		(16)
+#define TFN_TEST_CHECK_ASSERT_ERROR	(17)
+#define TFN_TEST_CHECK_ERCD_ERROR	(18)
+#define TFN_TEST_SET_BIT_FUNC		(19)
+#define TFN_TEST_SYSLOG_FLUSH		(20)
+#define TFN_TEST_TEST_FINISH		(21)
 
 #endif /* TOPPERS_EXTSVC_FNCODE_H */

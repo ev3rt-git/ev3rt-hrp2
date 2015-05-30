@@ -2,7 +2,7 @@
  *  TOPPERS Software
  *      Toyohashi Open Platform for Embedded Real-Time Systems
  * 
- *  Copyright (C) 2012-2013 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2012-2014 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -34,7 +34,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: test_extsvc1.c 940 2013-10-13 12:49:45Z ertl-hiro $
+ *  $Id: test_extsvc1.c 1018 2014-11-24 00:07:59Z ertl-hiro $
  */
 
 /* 
@@ -295,7 +295,7 @@ extsvc3_routine(intptr_t par1, intptr_t par2, intptr_t par3,
 				logbuf.loginfo[0] = (intptr_t) msg;
 				logbuf.loginfo[1] = (intptr_t) itron_strerror(ercd);
 				logbuf.loginfo[2] = (intptr_t) rtsk.svclevel;
-				(void) _syslog_syslog_wri_log(LOG_NOTICE, &logbuf);
+				(void) _syslog_wri_log(LOG_NOTICE, &logbuf, TDOM_KERNEL);
 			}
 			ercd = ERCD(MERCD(ercd), -2);
 		}

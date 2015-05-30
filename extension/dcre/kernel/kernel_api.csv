@@ -7,7 +7,7 @@ sem,SAC_SEM,%semid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 asem,AID_SEM,.nosem,,
 flg,CRE_FLG,#flgid { .flgatr .iflgptn },,
 flg,SAC_FLG,%flgid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
-aflg,AID_FLG,.nosem,,
+aflg,AID_FLG,.noflg,,
 dtq,CRE_DTQ,#dtqid { .dtqatr .dtqcnt &dtqmb },,
 dtq,SAC_DTQ,%dtqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 adtq,AID_DTQ,.nodtq,,
@@ -45,8 +45,8 @@ aisr,AID_ISR,.noisr,,
 inh,DEF_INH,.inhno { .inhatr &inthdr },,
 exc,DEF_EXC,.excno { .excatr &exchdr },,
 svc,DEF_SVC,.fncd { .svcatr &svcrtn .stksz },,
+ldom,LMT_DOM,{ +mintpri },-1,
 ics,DEF_ICS,{ .istksz &istk },-1,
 kmm,DEF_KMM,{ .kmmsz &kmm },-1,
 ini,ATT_INI,{ .iniatr &exinf &inirtn },-1,
 ter,ATT_TER,{ .teratr &exinf &terrtn },-1,
-ldom,LMT_DOM,{ +mintpri },-1,

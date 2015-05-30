@@ -37,7 +37,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: cyclic.c 994 2014-04-18 08:48:40Z ertl-hiro $
+ *  $Id: cyclic.c 1022 2014-12-02 01:48:02Z ertl-hiro $
  */
 
 /*
@@ -217,7 +217,8 @@ acre_cyc(const T_CCYC *pk_ccyc)
 
 		if ((p_cyccb->p_cycinib->cycatr & TA_STA) != 0U) {
 			p_cyccb->cycsta = true;
-			tmevtb_enqueue_cyc(p_cyccb, (EVTTIM)(p_cyccb->p_cycinib->cycphs));
+			tmevtb_enqueue_cyc(p_cyccb,
+								base_time + p_cyccb->p_cycinib->cycphs);
 		}
 		else {
 			p_cyccb->cycsta = false;

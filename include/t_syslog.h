@@ -5,7 +5,7 @@
  * 
  *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
  *                              Toyohashi Univ. of Technology, JAPAN
- *  Copyright (C) 2004-2012 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2004-2014 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -37,7 +37,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: t_syslog.h 970 2014-01-12 08:57:42Z ertl-hiro $
+ *  $Id: t_syslog.h 1014 2014-11-23 23:05:52Z ertl-hiro $
  */
 
 /*
@@ -57,12 +57,6 @@
  *  アセンブリ言語のソースファイルからこのファイルをインクルードする時
  *  は，TOPPERS_MACRO_ONLYを定義しておくことで，マクロ定義以外の記述を
  *  除くことができる．
- *
- *  このファイルをインクルードする前に，t_stddef.hをインクルードしてお
- *  くことが必要である（TOPPERS_SVC_CALLを定義していない場合には，以下
- *  でkernel.hをインクルードするため，t_stddef.hをインクルードしなくて
- *  も問題ないが，ASPカーネルとの互換姓のためにこのようなルールにしてお
- *  く）．
  */
 
 #ifndef TOPPERS_T_SYSLOG_H
@@ -72,9 +66,7 @@
 extern "C" {
 #endif
 
-#ifndef TOPPERS_SVC_CALL
 #include <kernel.h>
-#endif /* TOPPERS_SVC_CALL */
 #include <extsvc_fncode.h>
 
 /*

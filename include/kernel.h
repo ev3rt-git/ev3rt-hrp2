@@ -37,7 +37,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: kernel.h 999 2014-04-20 00:15:27Z ertl-hiro $
+ *  $Id: kernel.h 1022 2014-12-02 01:48:02Z ertl-hiro $
  */
 
 /*
@@ -422,7 +422,7 @@ typedef struct t_cisr {
 #define TKERNEL_MAKER	UINT_C(0x0118)	/* カーネルのメーカーコード */
 #define TKERNEL_PRID	UINT_C(0x0006)	/* カーネルの識別番号 */
 #define TKERNEL_SPVER	UINT_C(0xf517)	/* カーネル仕様のバージョン番号 */
-#define TKERNEL_PRVER	UINT_C(0x2020)	/* カーネルのバージョン番号 */
+#define TKERNEL_PRVER	UINT_C(0x2021)	/* カーネルのバージョン番号 */
 
 /*
  *  キューイング回数の最大値

@@ -3,7 +3,7 @@
  *      Toyohashi Open Platform for Embedded Real-Time Systems/
  *      High Reliable system Profile Kernel
  * 
- *  Copyright (C) 2005-2012 by Embedded and Real-Time Systems Laboratory
+ *  Copyright (C) 2005-2015 by Embedded and Real-Time Systems Laboratory
  *              Graduate School of Information Science, Nagoya Univ., JAPAN
  * 
  *  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -35,7 +35,7 @@
  *  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  *  の責任を負わない．
  * 
- *  $Id: test_svc.c 740 2012-08-20 07:42:35Z ertl-hiro $
+ *  $Id: test_svc.c 1027 2015-02-08 10:27:44Z ertl-hiro $
  */
 
 /* 
@@ -113,6 +113,28 @@ _test_check_point(uint_t count)
 }
 
 /*
+ *	条件チェックエラー
+ */
+void
+_test_check_assert_error(const char *expr, const char *file, int_t line)
+{
+	syslog_3(LOG_ERROR, "## Assertion `%s' failed at %s:%u.",
+								expr, file, line);
+	test_finish();
+}
+
+/*
+ *	エラーコードチェックエラー
+ */
+void
+_test_check_ercd_error(ER ercd, const char *file, int_t line)
+{
+	syslog_3(LOG_ERROR, "## Unexpected error %s detected at %s:%u.",
+								itron_strerror(ercd), file, line);
+	test_finish();
+}
+
+/*
  *	自己診断関数の設定
  */
 void
@@ -170,6 +192,23 @@ extsvc_check_point(intptr_t count, intptr_t par2, intptr_t par3,
 							intptr_t par4, intptr_t par5, ID cdmid)
 {
 	_test_check_point((uint_t) count);
+	return(E_OK);
+}
+
+ER_UINT
+extsvc_check_assert_error(intptr_t expr, intptr_t file, intptr_t line,
+							intptr_t par4, intptr_t par5, ID cdmid)
+{
+	_test_check_assert_error((const char *) expr,
+								(const char *) file, (int_t) line);
+	return(E_OK);
+}
+
+ER_UINT
+extsvc_check_ercd_error(intptr_t ercd, intptr_t file, intptr_t line,
+							intptr_t par4, intptr_t par5, ID cdmid)
+{
+	_test_check_ercd_error((ER) ercd, (const char *) file, (int_t) line);
 	return(E_OK);
 }
 

@@ -2,8 +2,8 @@
 		TOPPERS/HRP2カーネル
 		ターゲット依存部 ポーティングガイド
 
-		対応バージョン: Release 2.1.0
-		最終更新: 2012年9月8日
+		対応バージョン: Release 2.2.0
+		最終更新: 2014年11月17日
 
 このドキュメントは，TOPPERS/HRP2カーネルを，未サポートのターゲットシス
 テムにポーティングするために必要となるターゲット依存部の実装方法を説明
@@ -490,7 +490,7 @@ prepare_texrtn_utask()
 {
 	TEXPTN	texptn = p_runtsk->texptn;
 
-	if (!PROBE_STACK(ユーザスタックに情報を積む領域の先頭番地, サイズ) {
+	if (!VALID_USTACK(ユーザスタックに情報を積む領域の先頭番地, サイズ) {
 		return(true);
 	}
 	ユーザスタックに，タスク例外処理ルーチンからの戻り番地を積む
@@ -521,7 +521,7 @@ ret_tex(void)
 	}
 	スタックを実行状態のタスクのシステムスタックに切り換える
 
-	if (!PROBE_STACK(prepare_texrtn_utaskで
+	if (!VALID_USTACK(prepare_texrtn_utaskで
 						ユーザスタックに情報を積んだ領域の先頭番地, サイズ) {
 		タスク例外リターン時スタック不正例外ハンドラを呼び出す
 	}
@@ -584,7 +584,7 @@ ret_tex(void)
 bool_t
 i_check_tex_runtsk()
 {
-	if (!PROBE_STACK(prepare_texrtn_utaskで
+	if (!VALID_USTACK(prepare_texrtn_utaskで
 						ユーザスタックに情報を積む領域の先頭番地, サイズ) {
 		return(true);
 	}

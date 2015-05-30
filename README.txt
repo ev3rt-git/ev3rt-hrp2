@@ -1,5 +1,5 @@
 
-	TOPPERS/HRP2 Kernel（Release 2.2.0）
+	TOPPERS/HRP2 Kernel（Release 2.2.1）
 		Toyohashi Open Platform for Embedded Real-Time Systems/
 		Advanced Standard Profile Kernel
 
@@ -10,9 +10,9 @@ TOPPERS/HRPカーネルに対して，拡張・改良を加えたものという
 
 【コンフィギュレータのバージョンに関する注意】
 
-HRP2カーネルRelease 2.1.0では，TOPPERS新世代カーネル用コンフィギュレー
-タ（cfg）の最新版（1.9.0）の機能を用いている．1.8.0以前のバージョンのコ
-ンフィギュレータでは動作しないので注意すること．
+HRP2カーネルでは，TOPPERS新世代カーネル用コンフィギュレータ（cfg）の最
+新版（1.9.0）の機能を用いている．1.8.0以前のバージョンのコンフィギュレー
+タでは動作しないので注意すること．
 
 【最初に読むべきドキュメント】
 

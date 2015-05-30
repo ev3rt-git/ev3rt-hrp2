@@ -2,8 +2,8 @@
 		TOPPERS/HRP2カーネル
 		ユーザーズマニュアル
 
-		対応バージョン: Release 2.2.0
-		最終更新: 2013年10月13日
+		対応バージョン: Release 2.2.1
+		最終更新: 2015年5月30日
 
 このドキュメントは，TOPPERS/HRP2カーネルを使用するために必要な事項を説
 明するものである．
@@ -13,7 +13,7 @@
      Toyohashi Open Platform for Embedded Real-Time Systems/
      High Reliable system Profile Kernel
 
- Copyright (C) 2012-2013 by Embedded and Real-Time Systems Laboratory
+ Copyright (C) 2012-2014 by Embedded and Real-Time Systems Laboratory
              Graduate School of Information Science, Nagoya Univ., JAPAN
  
  上記著作権者は，以下の(1)〜(4)の条件を満たす場合に限り，本ソフトウェ
@@ -45,7 +45,7 @@
  アの利用により直接的または間接的に生じたいかなる損害に関しても，そ
  の責任を負わない．
  
- $Id: user.txt 958 2014-01-02 07:08:01Z ertl-hiro $
+ $Id: user.txt 1034 2015-05-30 00:11:48Z ertl-hiro $
 ----------------------------------------------------------------------
 
 
@@ -115,7 +115,7 @@ HRP2カーネルの仕様は，ASPカーネルに対して，次の機能を追�
 
 HRP2カーネルを含むTOPPERS新世代カーネルの仕様の詳細については，別途PDF
 ファイルの形で配布している「TOPPERS新世代カーネル統合仕様書（Release
-1.5.0）」を参照すること．
+1.7.1）」を参照すること．
 
 
 ２．ターゲット依存部
@@ -277,7 +277,6 @@ HRP2カーネルのデフォルト設定では，サービスコールを使用�
 		log_output.c	システムログのフォーマット出力
 		strerror.c		エラーメッセージ文字列を返す関数
 		t_perror.c		エラーメッセージの出力
-		test_lib.c		テストプログラム用ライブラリ
 		vasyslog.c		可変数引数のシステムログライブラリ
 
 	arch/gcc/
@@ -416,8 +415,8 @@ HRP2カーネルでは，ASPカーネルと同様，以下の4つのサポート
 
 テストプログラム用のライブラリの仕様は，基本的にはASPカーネルと同様であ
 る．ただし，HRP2カーネルでテストプログラム用ライブラリ関数を用いる場合
-には，test_lib.hをインクルードし，test_lib.cをコンパイル・リンクことに
-加えて，test_svc.cのコンパイル・リンクと，システムコンフィギュレーショ
+には，test_lib.hをインクルードすることに加えて，test_svc.c（test_lib.c
+ではないので注意）をコンパイル・リンクし，システムコンフィギュレーショ
 ンファイルでtest_svc.cfgをインクルードすることが必要である．
 
 10.2 カーネルの整合性検査
@@ -431,15 +430,14 @@ testディレクトリに置かれた"test"で始まるプログラムは，カ�
 ストを行うためのプログラムである．
 
 機能テストプログラムはテストプログラム用ライブラリを使用しているため，
-構築する場合には，MakefileのAPPL_COBJSにtest_lib.oを，SYSSVC_COBJSに
-test_svc.oを追加する必要がある．コンフィギュレーションスクリプトを使用
-する場合には，-Uオプションでtest_lib.oを，-Sオプションでtest_svc.oを指
-定する．具体的には，次のコマンドを実行すればよい（構築用のディレクトリ
-が，HRP2カーネルのソースファイルを展開したディレクトリの直下にあると仮
-定している）．
+構築する場合には，MakefileのSYSSVC_COBJSにtest_svc.oを追加する必要があ
+る．コンフィギュレーションスクリプトを使用する場合には，-Sオプションで
+test_svc.oを指定する．具体的には，次のコマンドを実行すればよい（構築用
+のディレクトリが，HRP2カーネルのソースファイルを展開したディレクトリの
+直下にあると仮定している）．
 
 	% perl ../configure -T <ターゲット略称> -A <機能テストプログラム名> \
-									-a ../test -U test_lib.o -S test_svc.o
+											-a ../test -S test_svc.o
 
 ASPカーネルでは，CPU例外処理のテスト(1)〜(13)は，同一のシステムコンフィ
 ギュレーションを共用しているが，HRP2カーネルでは共用していないため，
@@ -782,6 +780,7 @@ HRP2カーネルの開発支援のためのTRAC（バグトラッキングシス
 
 (12) システム構成管理機能
 
+	LMT_DOM({ PRI mintpri })
 	DEF_ICS({ SIZE istksz, STK_T *istk })
 	ATT_INI({ ATR iniatr, intptr_t exinf, INIRTN inirtn })
 	ATT_TER({ ATR teratr, intptr_t exinf, TERRTN terrtn })
@@ -790,6 +789,7 @@ HRP2カーネルの開発支援のためのTRAC（バグトラッキングシス
 
 	2012年5月17日	Release 2.0.0		正式版のリリース
 	2012年12月27日	Release 2.1.0		全般的に改良
-	2013年  月  日	Release 2.2.0
+	2014年11月24日	Release 2.2.0
+	2015年5月30日	Release 2.2.1
 
 以上

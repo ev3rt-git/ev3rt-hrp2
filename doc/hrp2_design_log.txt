@@ -3,7 +3,7 @@
 		TOPPERS/HRP2カーネル設計メモ（作成中）
 
 		作成者: 高田広章（名古屋大学）
-		最終更新: 2014年4月17日
+		最終更新: 2015年4月22日
 
 ○メモの位置付け
 
@@ -280,8 +280,8 @@ prb_memのdomidパラメータを削除した．
 
 【HRPカーネルからの変更】
 
-TOPPERS_SVC_FUNCCALLをTOPPERS_SVC_CALLと改名した．SVC_CALLマクロを追加
-した．
+CALSVC_TRAP（ソフトウェア割込みによりサービスコールを呼び出す）の意味を
+逆にして，TOPPERS_SVC_CALLとした．SVC_CALLマクロを追加した．
 
 ○データ型，定数，マクロの定義
 
@@ -3965,6 +3965,10 @@ ROMリージョン（TA_NOWRITE属性のメモリリージョン）に配置す�
 　標準的なメモリオブジェクト属性を持つ共有リードオンリー領域を最後に配
 　置する．
 
+・言語依存（具体的にはC++用）のセクションを出力するためにも，標準的なメ
+　モリオブジェクト属性を持つ共有リードオンリー領域を最後に配置するのが
+　都合がよい．
+
 ・ターゲットによっては，ベクタテーブルやカーネルの起動番地が先頭に置か
 　れている必要があることから，カーネルドメインの標準的なメモリオブジェ
 　クト属性を持つ専有リードオンリー領域を先頭に配置する．
@@ -4273,9 +4277,11 @@ extern ER_XXXX	extsvc_zzz_xxx_yyy(..., ID cdmid) throw();
 	logtask_flush		14
 	予約				15
 	check_point			16
-	set_bit_func		17
-	syslog_flush		18
-	test_finish			19
+	check_assert_error	17
+	check_ercd_error	18
+	set_bit_func		19
+	syslog_flush		20
+	test_finish			21
 
 以上
 
