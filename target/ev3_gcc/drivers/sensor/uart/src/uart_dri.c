@@ -1,18 +1,24 @@
 //#define DISABLE_PRU_UARTS
 
-#include "driver_common.h"
-#include "kernel_cfg.h"
 #include "am1808.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include "errno.h"
-#include "target_config.h"
-#include "uart_dri.h"
+#include "csl.h"
 #include "suart_err.h"
-#include "platform.h"
+#include "target_config.h"
+#include "kernel_cfg.h"
 
 #include "driver_debug.h"
 //#include "ev3api.h"
+
+//#define DEBUG
+//#define HIGHDEBUG
+//#define DEBUG_D_UART_ERROR
+// TODO: what if str contains "%" ?
+//#define UartWrite(str) syslog_printf(str, NULL, target_fput_log)
+//#define UartWrite(str) syslog_printf(str, NULL, ev3rt_console_log_putc)
+#define UartWrite(str)
 
 /**
  * Portable snprintf() implementation from Linux kernel
@@ -788,7 +794,20 @@ void uart_sensor_cyc(intptr_t unused) {
 }
 
 static void initialize(intptr_t unused) {
-    ER ercd;
+    ER_ID ercd;
+
+    /**
+     * Register ISR for Port 1
+     */
+    T_CISR port1_isr;
+    port1_isr.isratr = TA_NULL;
+    port1_isr.exinf  = INTNO_UART_PORT1;
+    port1_isr.intno  = INTNO_UART_PORT1;
+    port1_isr.isr    = (*ev3rt_sensor_port_1_disabled) ? uart_sio_isr : uart_sensor_isr;
+    port1_isr.isrpri = TMIN_ISRPRI;
+    ercd = acre_isr(&port1_isr);
+    assert(ercd > 0);
+
 
 	UART0.PWREMU_MGMT = 0x6001;
 	//UART0.PWREMU_MGMT = 0x6001; //sio_opn_por(1); /* Uart port 2 & enable irq(side effect)*/
@@ -838,7 +857,7 @@ void uart_sensor_isr(intptr_t intno) {
         pru_suart_isr(1); // Magic number, port 3 uses SUART2
         break;
     case INTNO_UART_PORT4:
-        pru_suart_isr(0); // Magic number, port 4 uses SUART2
+        pru_suart_isr(0); // Magic number, port 4 uses SUART1
         break;
     default:
         syslog(LOG_ERROR, "[uart dri] Invalid interrupt number %d", intno);

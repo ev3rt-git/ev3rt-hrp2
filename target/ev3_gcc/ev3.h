@@ -42,7 +42,7 @@
 /**
  * Interrupt priority
  */
-#define INTPRI_UART_SIO   (TMIN_INTPRI + 1)
+//#define INTPRI_UART_SIO   (TMIN_INTPRI + 1)
 #define INTPRI_UART_PORT1 (TMIN_INTPRI)
 #define INTPRI_UART_PORT2 (TMIN_INTPRI)
 #define INTPRI_UART_PORT3 (TMIN_INTPRI)

@@ -924,7 +924,8 @@ void      InitGpio(void)
 
 volatile  ULONG *Base[INPUTS];
 UBYTE     IntSuccess[INPUTS];
-#define   UART_CLOCK1   132000000
+//#define   UART_CLOCK1   132000000
+#define   UART_CLOCK1   150000000
 #define   UART_CLOCK2   150000000
 // \todo UART clock 1 and 2 are different?
 

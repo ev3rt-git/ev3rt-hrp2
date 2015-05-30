@@ -53,8 +53,6 @@ typedef uint32_t u32;
 //typedef   signed char           SBYTE;  //!< Basic Type used to symbolise 8  bit signed values
 //typedef   signed short          SWORD;  //!< Basic Type used to symbolise 16 bit signed values
 
-// TODO: what if str contains "%" ?
-#define UartWrite(str) syslog_printf(str, NULL, target_fput_log)
 
 
 //#define __KERNEL__

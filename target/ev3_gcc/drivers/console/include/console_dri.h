@@ -47,6 +47,8 @@ void console_menu_perform_action(intptr_t action);
 
 #define ev3rt_console_button_flag (EV3RT_CONSOLE_BTN_FLG)
 
+void ev3rt_console_log_putc(char c);
+
 /**
  * Tasks and handlers
  */

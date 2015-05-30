@@ -36,7 +36,10 @@ kernel_free(void *ptr)
 #endif
 
 bool_t VALID_INTNO_CREISR(INTNO intno) {
-	return false;
+    if (intno == INTNO_UART_PORT1)
+        return true;
+    else
+	    return false;
 }
 
 /**
