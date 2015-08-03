@@ -48,7 +48,7 @@ static void send_timer_handler(timer_source_t *ts){
 	// Try to send
 	if(send_mtu > 0 && send_buffer_sz > 0) { // RFCOMM channel opened and send buffer is not empty
 		uint16_t send_bytes = (send_mtu < send_buffer_sz) ? send_mtu : send_buffer_sz;
-		if(rfcomm_send_internal(rfcomm_channel_id, send_buffer, send_bytes) == 0) { // Succeed
+		if(!hci_is_packet_buffer_reserved() && rfcomm_send_internal(rfcomm_channel_id, send_buffer, send_bytes) == 0) { // Succeed
 			send_buffer    += send_bytes;
 			send_buffer_sz -= send_bytes;
 		}
