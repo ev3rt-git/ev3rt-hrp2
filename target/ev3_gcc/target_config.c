@@ -1,4 +1,6 @@
 #include "kernel_impl.h"
+#include "kernel/task.h"
+#include "kernel/memory.h"
 #include <sil.h>
 #include "target_syssvc.h"
 #include "am1808.h"
@@ -42,15 +44,8 @@ bool_t VALID_INTNO_CREISR(INTNO intno) {
 	    return false;
 }
 
-/**
- * Initialize the target.
- */
 void
-target_initialize(void)
-{
-	/*
-	 * チップ依存の初期化
-	 */
+target_initialize(void) {
 	chip_initialize();
 }
 
@@ -58,8 +53,7 @@ target_initialize(void)
  *  ターゲット依存の終了処理
  */
 void
-target_exit(void)
-{
+target_exit(void) {
 	// TODO: check if this is necessary
     // Flush low level output by write 2K bytes.
     for(int i = 0; i < 2048; ++i)
@@ -69,4 +63,25 @@ target_exit(void)
     GPIO67.OUT_DATA &= ~GPIO_ED_PIN11;
 	
     while(1);
+}
+
+/**
+ * A fast version of section initialization
+ */
+void initialize_sections(void) {
+    uint_t              i;
+    uint8_t             *src, *dst;
+    const DATASECINIB   *p_datasecinib;
+    const BSSSECINIB    *p_bsssecinib;
+
+    for (i = 0; i < tnum_datasec; i++) {
+        p_datasecinib = &(datasecinib_table[i]);
+        memcpy(p_datasecinib->start_data, p_datasecinib->start_idata, p_datasecinib->end_data - p_datasecinib->start_data);
+    }
+
+
+    for (i = 0; i < tnum_bsssec; i++) {
+        p_bsssecinib = &(bsssecinib_table[i]);
+        memset(p_bsssecinib->start_bss, 0, p_bsssecinib->end_bss - p_bsssecinib->start_bss);
+    }
 }

@@ -3,7 +3,7 @@
 #  This file should be included instead of 'Makefile.target'
 #  to use the platform properly.
 
-CDEFS += -DBUILD_EV3_PLATFORM
+CDEFS += -DBUILD_EV3_PLATFORM -DOMIT_INITIALIZE_SECTIONS
 INCLUDES += -I$(TARGETDIR)/drivers
 KERNEL_DIR += $(TARGETDIR)/drivers $(TARGETDIR)/api
 
