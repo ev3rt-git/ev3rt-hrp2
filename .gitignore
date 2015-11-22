@@ -32,3 +32,6 @@
 
 # cfg
 cfg/cfg/cfg
+
+# Exceptions
+!libusblib.a
