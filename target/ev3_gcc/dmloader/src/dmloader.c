@@ -150,7 +150,8 @@ handle_module_cfg_tab(T_LDM_CAN *ldm_can) {
             assert(probe_ldm_memory(ent->argument, sizeof(T_CSEM), ldm_can));
             assert(probe_ldm_memory(ent->retvalptr, sizeof(ID), ldm_can));
             T_CSEM pk_csem = *(T_CSEM*)ent->argument;
-            // TODO: check pk_csem
+			assert(get_atrdomid(pk_csem.sematr) == TDOM_SELF);             // Check original DOMID
+			pk_csem.sematr |= TA_DOM(ldm_can->domid);                      // Set new DOMID
             ercd = acre_sem(&pk_csem);
             assert(ercd > 0);
             if(ercd > 0) {
@@ -170,7 +171,8 @@ handle_module_cfg_tab(T_LDM_CAN *ldm_can) {
             assert(probe_ldm_memory(ent->argument, sizeof(T_CFLG), ldm_can));
             assert(probe_ldm_memory(ent->retvalptr, sizeof(ID), ldm_can));
             T_CFLG pk_cflg = *(T_CFLG*)ent->argument;
-            // TODO: check pk_csem
+			assert(get_atrdomid(pk_cflg.flgatr) == TDOM_SELF);             // Check original DOMID
+			pk_cflg.flgatr |= TA_DOM(ldm_can->domid);                      // Set new DOMID
             ercd = acre_flg(&pk_cflg);
             assert(ercd > 0);
             if(ercd > 0) {
