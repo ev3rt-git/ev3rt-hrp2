@@ -28,9 +28,9 @@
 #define ASSERT assert //#include "debug.h"
 #include <t_syslog.h>
 #include "usb.h"
-#include "usblib.h"
+#include "usblib/usblib.h"
 #include "usbdevice.h"
-#include "usbdevicepriv.h"
+//#include "usbdevicepriv.h"
 #include "usblibpriv.h"
 //#include "delay.h"
 #include "armv5/am1808/interrupt.h" //#include "interrupt.h"

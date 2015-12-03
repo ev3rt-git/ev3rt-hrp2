@@ -137,12 +137,12 @@ static void (*cb_Fxn[EDMA3_NUM_TCC]) (unsigned int tcc, unsigned int status);
 **                      VARIABLE DEFINITIONS
 *******************************************************************************/
 /* Global flags for interrupt handling */
-//static volatile unsigned int dmaIsRunning = 0;
-//static volatile unsigned int xferCompFlag = 0;
-//static volatile unsigned int dataTimeout = 0;
-//static volatile unsigned int dataCRCError = 0;
-//static volatile unsigned int cmdCompFlag = 0;
-//static volatile unsigned int cmdTimeout = 0;
+static volatile unsigned int dmaIsRunning = 0;
+static volatile unsigned int xferCompFlag = 0;
+static volatile unsigned int dataTimeout = 0;
+static volatile unsigned int dataCRCError = 0;
+static volatile unsigned int cmdCompFlag = 0;
+static volatile unsigned int cmdTimeout = 0;
 #if DEBUG_PRINT
 static volatile unsigned int intrStatus = 0;
 #endif
@@ -167,67 +167,6 @@ static volatile unsigned int pageTable[MMU_PAGETABLE_NUM_ENTRY]
 /******************************************************************************
 **                          FUNCTION DEFINITIONS
 *******************************************************************************/
-
-#ifdef ARM_SUPPORTED
-/*
-** This function will setup the MMU. The function maps three regions -
-** 1. DDR
-** 2. OCMC RAM
-** 3. Device memory
-** The function also enables the MMU.
-*/
-void MMUConfigAndEnable(void)
-{
-    /*
-    ** Define DDR memory region of AM335x. DDR can be configured as Normal
-    ** memory with R/W access in user/privileged modes. The cache attributes
-    ** specified here are,
-    ** Inner - Write through, No Write Allocate
-    ** Outer - Write Back, Write Allocate
-    */
-    REGION regionDdr = {
-                        MMU_PGTYPE_SECTION, START_ADDR_DDR, NUM_SECTIONS_DDR,
-                        MMU_MEMTYPE_NORMAL_NON_SHAREABLE(MMU_CACHE_WT_NOWA,
-                                                         MMU_CACHE_WB_WA),
-                        MMU_REGION_NON_SECURE, MMU_AP_PRV_RW_USR_RW,
-                        (unsigned int*)pageTable
-                       };
-    /*
-    ** Define OCMC RAM region of AM335x. Same Attributes of DDR region given.
-    */
-    REGION regionOcmc = {
-                         MMU_PGTYPE_SECTION, START_ADDR_OCMC, NUM_SECTIONS_OCMC,
-                         MMU_MEMTYPE_NORMAL_NON_SHAREABLE(MMU_CACHE_WT_NOWA,
-                                                          MMU_CACHE_WB_WA),
-                         MMU_REGION_NON_SECURE, MMU_AP_PRV_RW_USR_RW,
-                         (unsigned int*)pageTable
-                        };
-
-    /*
-    ** Define Device Memory Region. The region between OCMC and DDR is
-    ** configured as device memory, with R/W access in user/privileged modes.
-    ** Also, the region is marked 'Execute Never'.
-    */
-    REGION regionDev = {
-                        MMU_PGTYPE_SECTION, START_ADDR_DEV, NUM_SECTIONS_DEV,
-                        MMU_MEMTYPE_DEVICE_SHAREABLE,
-                        MMU_REGION_NON_SECURE,
-                        MMU_AP_PRV_RW_USR_RW  | MMU_SECTION_EXEC_NEVER,
-                        (unsigned int*)pageTable
-                       };
-
-    /* Initialize the page table and MMU */
-    MMUInit((unsigned int*)pageTable);
-
-    /* Map the defined regions */
-    MMUMemRegionMap(&regionDdr);
-    MMUMemRegionMap(&regionOcmc);
-    MMUMemRegionMap(&regionDev);
-
-    /* Now Safe to enable MMU */
-    MMUEnable((unsigned int*)pageTable);
-}
-#endif
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -263,37 +202,25 @@ static unsigned int MMCSDCmdStatusGet(mmcsdCtrlInfo *ctrl)
   intrStatus = 0;
 #else
 
-  FLGPTN flgptn, waiptn;
-  ER ercd;
-
   /* Wait for these flags what will be modified by the MMCSDIsr() */
-//  while ((cmdCompFlag == 0) && (cmdTimeout == 0))
-//    continue;
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): wai_flg(MMCSD_ISR_FLGPTN_CMDCOMP | MMCSD_ISR_FLGPTN_CMDTIMEOUT)", __FUNCTION__);
+#if defined(DEBUG_MMCSD)
+  syslog(LOG_EMERG, "%s(): wait for cmdCompFlag or cmdTimeout", __FUNCTION__);
 #endif
-  waiptn = MMCSD_ISR_FLGPTN_CMDCOMP | MMCSD_ISR_FLGPTN_CMDTIMEOUT;
-  ercd = wai_flg(MMCSD_ISR_FLG, waiptn, TWF_ORW, &flgptn);
-  assert(ercd == E_OK);
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): clr_flg(MMCSD_ISR_FLG, ~0x%x)", __FUNCTION__, waiptn & flgptn);
+  while ((cmdCompFlag == 0) && (cmdTimeout == 0)) continue; // TODO: timeout for debug?
+  assert(!(cmdCompFlag && cmdTimeout)); // Should NEVER be true at the same time!
+#if defined(DEBUG_MMCSD)
+  syslog(LOG_EMERG, "%s(): cmdCompFlag or cmdTimeout appeared", __FUNCTION__);
 #endif
-  ercd = clr_flg(MMCSD_ISR_FLG, ~(waiptn & flgptn));
-  assert(ercd == E_OK);
-#endif
-//  if (cmdCompFlag)
-  if (flgptn & MMCSD_ISR_FLGPTN_CMDCOMP)
-  {
-    status = 1;
-//    cmdCompFlag = 0;
-  } else
 
-//  if (cmdTimeout)
-  if (flgptn & MMCSD_ISR_FLGPTN_CMDTIMEOUT)
-  {
-	  syslog(LOG_ERROR, "%s(): cmdTimeout!!", __FUNCTION__);
+#endif
+
+  if (cmdCompFlag) {
+    status = 1;
+    cmdCompFlag = 0;
+  } else if (cmdTimeout) {
+	syslog(LOG_ERROR, "%s(): cmdTimeout!!", __FUNCTION__);
     status = 0;
-//    cmdTimeout = 0;
+    cmdTimeout = 0;
   }
 
 #if DEBUG_PRINT
@@ -308,8 +235,7 @@ static unsigned int MMCSDCmdStatusGet(mmcsdCtrlInfo *ctrl)
 static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
 {
   unsigned int          status  = 0; /* Assume fail?????? */
-//  volatile unsigned int timeOut = 0xFFFF;
-  volatile unsigned int timeOut = 1000;
+  volatile unsigned int timeOut = 0xFFFFFF;
 #if DEBUG_PRINT
   volatile unsigned int timeOut2 = 30;
 #endif
@@ -341,46 +267,29 @@ static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
   intrStatus = 0;
 #else
 
-  FLGPTN flgptn, waiptn;
-  ER ercd;
-
   /* Wait for these flags what will be modified by the MMCSDIsr() */
-  //while ((xferCompFlag == 0) && (dataTimeout == 0) && (dataCRCError==0));
 #if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): wai_flg(MMCSD_ISR_FLGPTN_XFERCOMP | MMCSD_ISR_FLGPTN_DATATIMEOUT | MMCSD_ISR_FLGPTN_DATACRCERR)", __FUNCTION__);
+  syslog(LOG_ERROR, "%s(): wait xferCompFlag|dataTimeout|dataCRCError", __FUNCTION__);
 #endif
-  waiptn = MMCSD_ISR_FLGPTN_XFERCOMP | MMCSD_ISR_FLGPTN_DATATIMEOUT | MMCSD_ISR_FLGPTN_DATACRCERR;
-  ercd = wai_flg(MMCSD_ISR_FLG, waiptn, TWF_ORW, &flgptn);
-  assert(ercd == E_OK);
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): clr_flg(MMCSD_ISR_FLG, ~0x%x)", __FUNCTION__, waiptn & flgptn);
-#endif
-  ercd = clr_flg(MMCSD_ISR_FLG, ~(waiptn & flgptn));
-  assert(ercd == E_OK);
+  for (volatile int i = 0; !xferCompFlag && !dataTimeout && !dataCRCError; ++i) {
+	  if (i >= timeOut) assert(false); // timeout!
+  }
+  assert((int)xferCompFlag + (int)dataTimeout + (int)dataCRCError == 1); // Only handle one flag
+
 #endif
 
-  //if (xferCompFlag)
-  if (flgptn & MMCSD_ISR_FLGPTN_XFERCOMP)
-  {
+  if (xferCompFlag) {
     status = 1;
-//    xferCompFlag = 0;
-  }
-
-  //if (dataTimeout)
-  if (flgptn & MMCSD_ISR_FLGPTN_DATATIMEOUT)
-  {
+    xferCompFlag = 0;
+  } else if (dataTimeout) {
     status = 0;
-//    dataTimeout = 0;
-  }
-
-  //if (dataCRCError)
-  if (flgptn & MMCSD_ISR_FLGPTN_DATACRCERR)
-  {
+    dataTimeout = 0;
+  } else if (dataCRCError) {
 #if DEBUG_PRINT
     UARTprintf("%s():IGNORE CRC ERROR\r\n", __FUNCTION__);
 #endif
     status = 1; /* Ignore!! */
-//    dataCRCError = 0;
+    dataCRCError = 0;
     assert(false);
   }
 
@@ -388,11 +297,13 @@ static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
 
   /* Wait for DMA ISR to complete. Flag modified by DMA ISR callback() */
 #if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): wai_flg(MMCSD_ISR_FLGPTN_DMACOMP)", __FUNCTION__);
+  syslog(LOG_ERROR, "%s(): wait !dmaIsRunning", __FUNCTION__);
 #endif
-  waiptn = MMCSD_ISR_FLGPTN_DMACOMP;
-  ercd = twai_flg(MMCSD_ISR_FLG, waiptn, TWF_ORW, &flgptn, timeOut);
-  assert(ercd == E_OK);
+  for (volatile int i = 0; dmaIsRunning; ++i) {
+	  if (i >= timeOut) assert(false); // DMA should never timeout!
+  }
+
+#if 0
   if (ercd != E_OK) { // For debug
 	  syslog(LOG_ERROR, "Wait MMCSD_ISR_FLGPTN_DMACOMP failed.");
 	  while(1) {
@@ -412,20 +323,8 @@ static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
 		  tslp_tsk(1000);
 	  }
   }
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): clr_flg(MMCSD_ISR_FLG, ~0x%x)", __FUNCTION__, waiptn & flgptn);
-#endif
-  ercd = clr_flg(MMCSD_ISR_FLG, ~(waiptn & flgptn));
   assert(ercd == E_OK);
-//  while(dmaIsRunning)
-//  {
-//    if(--timeOut == 0)
-//    {
-//    	assert(false); // TODO: DMA should never timeout! -- ertl-liyixiao
-//      status = 0;
-//      break;
-//    }
-//  }
+#endif
 
   ctrl->dmaEnable = 0;
 
@@ -558,15 +457,10 @@ static void MMCSDXferSetup(mmcsdCtrlInfo *ctrl, unsigned char rwFlag, void *ptr,
 	syslog(LOG_ERROR, "    nBlks=%d)", nBlks);
 #endif
 
-#if defined(DEBUG) && 0
-	syslog(LOG_ERROR, "%s(): clr_flg(MMCSD_ISR_FLGPTN_XFERCOMP | MMCSD_ISR_FLGPTN_DATATIMEOUT | MMCSD_ISR_FLGPTN_DATACRCERR | MMCSD_ISR_FLGPTN_DMACOMP)", __FUNCTION__);
-#endif
-	ER ercd = clr_flg(MMCSD_ISR_FLG, ~(MMCSD_ISR_FLGPTN_XFERCOMP | MMCSD_ISR_FLGPTN_DATATIMEOUT | MMCSD_ISR_FLGPTN_DATACRCERR | MMCSD_ISR_FLGPTN_DMACOMP));
-	assert(ercd == E_OK);
-//  dmaIsRunning = 1;
-//  xferCompFlag = 0;
-//  dataTimeout  = 0;
-//  dataCRCError = 0;
+  dmaIsRunning = 1;
+  xferCompFlag = 0;
+  dataTimeout  = 0;
+  dataCRCError = 0;
 
   if (rwFlag == 1)
   {
@@ -593,15 +487,492 @@ static void Edma3ComplCallback(unsigned int tccNum, unsigned int status)
   syslog(LOG_ERROR, "%s(tccNum=%d,status=%d)", __FUNCTION__,tccNum,status);
 #endif
 
-//  dmaIsRunning = 0;
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): iset_flg(MMCSD_ISR_FLGPTN_DMACOMP)", __FUNCTION__);
-#endif
-  ER ercd = iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_DMACOMP);
-  assert(ercd == E_OK);
+  dmaIsRunning = 0;
 
   EDMA3DisableTransfer(EDMA_INST_BASE, tccNum, EDMA3_TRIG_MODE_EVENT);
 }
+
+/*---------------------------------------------------------------------------*/
+void MMCSDIsr(intptr_t unused)
+{
+  volatile unsigned int status = 0;
+
+  status = MMCSDIntrStatusGetAndClr(ctrlInfo.memBase);
+
+#if defined(DEBUG) || 0
+  syslog(LOG_ERROR, "%s(): status=0x%08x", __FUNCTION__, status); // TODO: added by ertl-liyixiao
+//  intrStatus = status;
+#endif
+
+  if (status & MMCSD_STAT_CMDCOMP) {
+	cmdCompFlag = 1;
+#if defined(DEBUG) || 0
+  syslog(LOG_ERROR, "%s(): cmdCompFlag", __FUNCTION__);
+#endif
+  }
+
+  if (status & MMCSD_STAT_CMDTIMEOUT) {
+    cmdTimeout = 1;
+#if defined(DEBUG) || 1
+    syslog(LOG_ERROR, "%s(): cmdTimeout!!", __FUNCTION__);
+#endif
+  }
+
+  if (status & MMCSD_STAT_DATATIMEOUT)
+  {
+    dataTimeout = 1;
+    syslog(LOG_ERROR, "%s(): dataTimeout!!", __FUNCTION__);
+  }
+
+  if (status & MMCSD_STAT_DATACRCERR)
+  {
+    dataCRCError = 1;
+    syslog(LOG_ERROR, "%s(): dataCRCError!!", __FUNCTION__);
+  }
+
+  if (status & MMCSD_MMCST0_DATDNE/* IMPORTANT: MMCSD_STAT_TRNFCOMP IS WRONG -- ertl-liyixiao */)
+  {
+    xferCompFlag = 1;
+#if defined(DEBUG) || 0
+  syslog(LOG_ERROR, "%s(): xferCompFlag", __FUNCTION__);
+#endif
+  }
+}
+
+/*---------------------------------------------------------------------------*/
+static void complCallback(intptr_t tcc) {
+	Edma3ComplCallback(tcc, EDMA3_XFER_COMPLETE);
+}
+
+static void MMCSDEdmaInit(void)
+{
+#if 0
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+  /* Initializing the EDMA. */
+  EDMA3Initialize();
+
+  /* Request DMA Channel and TCC for MMCSD Transmit*/
+  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
+                      MMCSD_TX_EDMA_CHAN, MMCSD_TX_EDMA_CHAN,
+                      EVT_QUEUE_NUM);
+
+  /* Registering Callback Function for TX*/
+  cb_Fxn[MMCSD_TX_EDMA_CHAN] = &Edma3ComplCallback;
+
+  /* Request DMA Channel and TCC for UART Receive */
+  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
+                      MMCSD_RX_EDMA_CHAN, MMCSD_RX_EDMA_CHAN,
+                      EVT_QUEUE_NUM);
+
+  /* Registering Callback Function for RX*/
+  cb_Fxn[MMCSD_RX_EDMA_CHAN] = &Edma3ComplCallback;
+#endif
+  /* Request DMA Channel and TCC for MMCSD Transmit*/
+  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
+                      MMCSD_TX_EDMA_CHAN, MMCSD_TX_EDMA_CHAN,
+                      EVT_QUEUE_NUM);
+
+  EDMA30SetComplIsr(MMCSD_TX_EDMA_CHAN, complCallback, MMCSD_TX_EDMA_CHAN);
+
+  /* Request DMA Channel and TCC for MMCSD Receive */
+  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
+                      MMCSD_RX_EDMA_CHAN, MMCSD_RX_EDMA_CHAN,
+                      EVT_QUEUE_NUM);
+
+  EDMA30SetComplIsr(MMCSD_RX_EDMA_CHAN, complCallback, MMCSD_RX_EDMA_CHAN);
+}
+
+/*---------------------------------------------------------------------------*/
+/*
+** Initialize the MMCSD controller structure for use
+*/
+static void MMCSDControllerSetup(void)
+{
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+  ctrlInfo.memBase        = MMCSD_INST_BASE;
+  ctrlInfo.ctrlInit       = MMCSDLibControllerInit;
+  ctrlInfo.xferSetup      = MMCSDXferSetup;
+  ctrlInfo.cmdStatusGet   = MMCSDCmdStatusGet;
+  ctrlInfo.xferStatusGet  = MMCSDXferStatusGet;
+  ctrlInfo.cardPresent    = MMCSDLibCardPresent;
+  ctrlInfo.cmdSend        = MMCSDLibCmdSend;
+  ctrlInfo.busWidthConfig = MMCSDLibBusWidthConfig;
+  ctrlInfo.busFreqConfig  = MMCSDLibBusFreqConfig;
+  ctrlInfo.intrMask       = (MMCSD_INTR_CMDCOMP | MMCSD_INTR_CMDTIMEOUT |
+                             MMCSD_INTR_DATATIMEOUT | MMCSD_INTR_TRNFCOMP |
+                             MMCSD_INTR_DATACRCERR);
+  ctrlInfo.intrMask = 0xFFFFFFFF; // Enable all interrupts for debug -- ertl-liyixiao
+  ctrlInfo.intrEnable     = MMCSDLibIntrEnable;
+  ctrlInfo.busWidth       = (SD_BUS_WIDTH_1BIT | SD_BUS_WIDTH_4BIT);
+  ctrlInfo.highspeed      = 1;
+  ctrlInfo.ocr            = (SD_OCR_VDD_3P0_3P1 | SD_OCR_VDD_3P1_3P2);
+  ctrlInfo.card           = &sdCard;
+  ctrlInfo.ipClk          = MMCSD_IN_FREQ;
+  ctrlInfo.opClk          = MMCSD_INIT_FREQ;
+  ctrlInfo.cdPinNum       = MMCSD_CARD_DETECT_PINNUM;
+  sdCard.ctrl             = &ctrlInfo;
+
+  dmaIsRunning = 0;
+  xferCompFlag = 0;
+  dataTimeout = 0;
+  dataCRCError = 0;
+  cmdCompFlag = 0;
+  cmdTimeout = 0;
+}
+
+extern void diskio_initialize(mmcsdCardInfo *card); // TODO: Should be somewhere else. -- ertl-liyixiao
+
+void initialize_mmcsd() {
+
+    /* Configure EDMA to service the MMCSD events. */
+    MMCSDEdmaInit();
+
+#if 0 // TODO: Check if these steps are necessary? -- ertl-liyixiao
+    /* Perform pin-mux for MMCSD pins. */
+    MMCSDPinMuxSetup();
+
+    /* Enable module clock for MMCSD. */
+    MMCSDModuleClkConfig();
+
+    DelayTimerSetup();
+#endif
+
+    /* Basic controller initializations */
+    MMCSDControllerSetup();
+
+    /* Initialize the MMCSD controller */
+    MMCSDCtrlInit(&ctrlInfo);
+
+    MMCSDIntEnable(&ctrlInfo);
+
+    /* Check SD card status */
+    while(1) {
+    	if((MMCSDCardPresent(&ctrlInfo)) == 1) {
+    		syslog(LOG_DEBUG, "Card is present");
+    		break;
+    	}
+    	syslog(LOG_ERROR, "Card is not present");
+    	tslp_tsk(1000);
+    }
+
+    /* Initialize device control interface for FatFS */
+    diskio_initialize(&sdCard);
+
+//    static char tmpBuf[1024] __attribute__ ((aligned (SOC_EDMA3_ALIGN_SIZE)));
+//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
+//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
+//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
+//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
+//    dump_mmc(&MMCSD0);
+//    while(1) tslp_tsk(1000);
+}
+
+bool_t mmcsd_blockread(void *buf, unsigned int block, unsigned int nblks) {
+	return MMCSDReadCmdSend(&ctrlInfo, buf, block, nblks);
+}
+
+bool_t mmcsd_blockwrite(const void *data, unsigned int block, unsigned int nblks) {
+	return MMCSDWriteCmdSend(&ctrlInfo, (void*)data, block, nblks);
+}
+
+inline
+unsigned int mmcsd_blocks() {
+	return ctrlInfo.card->nBlks;
+}
+
+
+#if 0 // TODO: Unused. EDMA and MMC/SD modules should have been enabled somewhere else. -- ertl-liyixiao
+/*---------------------------------------------------------------------------*/
+// Should be in platform edma.c aka lcdkC6478_edma.c.
+static void EDMAModuleClkConfig(void)
+{
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+  /* Enabling the PSC for EDMA3CC_0).*/
+  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_CC0, PSC_POWERDOMAIN_ALWAYS_ON,
+                   PSC_MDCTL_NEXT_ENABLE);
+
+  /* Enabling the PSC for EDMA3TC_0.*/
+  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_TC0, PSC_POWERDOMAIN_ALWAYS_ON,
+                   PSC_MDCTL_NEXT_ENABLE);
+}
+
+/*---------------------------------------------------------------------------*/
+// Should be in platform mmcsd.c aka lcdkC6478_mmcsd.c.
+static void MMCSDModuleClkConfig(void)
+{
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+
+#if 1
+  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_MMCSD0, PSC_POWERDOMAIN_ALWAYS_ON,
+                   PSC_MDCTL_NEXT_ENABLE);
+#else
+  PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_MMCSD1, PSC_POWERDOMAIN_ALWAYS_ON,
+                   PSC_MDCTL_NEXT_ENABLE);
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+int main(void)
+{
+    volatile unsigned int i = 0;
+    volatile unsigned int initFlg = 1;
+
+#ifdef ARM_SUPPORTED
+    /* Setup the MMU and do necessary MMU configurations. */
+    MMUConfigAndEnable();
+#endif
+
+#ifdef CACHE_SUPPORTED
+    /* Enable all levels of CACHE. */
+    CacheEnable(CACHE_ALL);
+#endif
+
+    /* Initialize UART. */
+    UARTStdioInit();
+
+    /* Configure the EDMA clocks. */
+    EDMAModuleClkConfig();
+
+    /* Configure EDMA to service the MMCSD events. */
+    MMCSDEdmaInit();
+
+    /* Perform pin-mux for MMCSD pins. */
+    MMCSDPinMuxSetup();
+
+    /* Enable module clock for MMCSD. */
+    MMCSDModuleClkConfig();
+
+    DelayTimerSetup();
+
+#ifdef MMCSD_PERF
+    PerfTimerSetup();
+#endif
+
+    /* Basic controller initializations */
+    MMCSDControllerSetup();
+
+    /* Initialize the MMCSD controller */
+    MMCSDCtrlInit(&ctrlInfo);
+
+    MMCSDIntEnable(&ctrlInfo);
+
+#if 0
+    UARTPuts("Test timer:wait 5s\r\n", -1);
+    delay(5000);
+    UARTPuts("Test timer:Done\r\n", -1);
+#endif
+
+    for(;;)
+    {
+        if((MMCSDCardPresent(&ctrlInfo)) == 1)
+        {
+#if DEBUG_PRINT
+            UARTPuts("Card is present\r\n", -1);
+#endif
+            if(initFlg)
+            {
+                UARTPuts("Call MMCSDFsMount\r\n", -1);
+                MMCSDFsMount(0, &sdCard);
+                UARTPuts("Back MMCSDFsMount\r\n", -1);
+                initFlg = 0;
+                UARTPuts("Call Cmd_help\r\n", -1);
+                Cmd_help(0, NULL);
+            }
+            MMCSDFsProcessCmdLine();
+        }
+        else
+        {
+UARTPuts("Card is not present\r\n", -1);
+delay(1000);
+//          delay(1);
+
+            i = (i + 1) & 0xFFF;
+
+            if(i == 1)
+            {
+                 UARTPuts("Please insert the card \r\n", -1);
+            }
+
+            if(initFlg != 1)
+            {
+                 /* Reinitialize all the state variables */
+                 dmaIsRunning = 0;
+                 xferCompFlag = 0;
+                 dataTimeout  = 0;
+                 dataCRCError = 0;
+                 cmdCompFlag  = 0;
+                 cmdTimeout   = 0;
+
+                 /* Initialize the MMCSD controller */
+                 MMCSDCtrlInit(&ctrlInfo);
+
+                 MMCSDIntEnable(&ctrlInfo);
+            }
+
+            initFlg = 1;
+        }
+    }
+}
+
+
+#ifdef ARM_SUPPORTED
+/*
+** This function will setup the MMU. The function maps three regions -
+** 1. DDR
+** 2. OCMC RAM
+** 3. Device memory
+** The function also enables the MMU.
+*/
+void MMUConfigAndEnable(void)
+{
+    /*
+    ** Define DDR memory region of AM335x. DDR can be configured as Normal
+    ** memory with R/W access in user/privileged modes. The cache attributes
+    ** specified here are,
+    ** Inner - Write through, No Write Allocate
+    ** Outer - Write Back, Write Allocate
+    */
+    REGION regionDdr = {
+                        MMU_PGTYPE_SECTION, START_ADDR_DDR, NUM_SECTIONS_DDR,
+                        MMU_MEMTYPE_NORMAL_NON_SHAREABLE(MMU_CACHE_WT_NOWA,
+                                                         MMU_CACHE_WB_WA),
+                        MMU_REGION_NON_SECURE, MMU_AP_PRV_RW_USR_RW,
+                        (unsigned int*)pageTable
+                       };
+    /*
+    ** Define OCMC RAM region of AM335x. Same Attributes of DDR region given.
+    */
+    REGION regionOcmc = {
+                         MMU_PGTYPE_SECTION, START_ADDR_OCMC, NUM_SECTIONS_OCMC,
+                         MMU_MEMTYPE_NORMAL_NON_SHAREABLE(MMU_CACHE_WT_NOWA,
+                                                          MMU_CACHE_WB_WA),
+                         MMU_REGION_NON_SECURE, MMU_AP_PRV_RW_USR_RW,
+                         (unsigned int*)pageTable
+                        };
+
+    /*
+    ** Define Device Memory Region. The region between OCMC and DDR is
+    ** configured as device memory, with R/W access in user/privileged modes.
+    ** Also, the region is marked 'Execute Never'.
+    */
+    REGION regionDev = {
+                        MMU_PGTYPE_SECTION, START_ADDR_DEV, NUM_SECTIONS_DEV,
+                        MMU_MEMTYPE_DEVICE_SHAREABLE,
+                        MMU_REGION_NON_SECURE,
+                        MMU_AP_PRV_RW_USR_RW  | MMU_SECTION_EXEC_NEVER,
+                        (unsigned int*)pageTable
+                       };
+
+    /* Initialize the page table and MMU */
+    MMUInit((unsigned int*)pageTable);
+
+    /* Map the defined regions */
+    MMUMemRegionMap(&regionDdr);
+    MMUMemRegionMap(&regionOcmc);
+    MMUMemRegionMap(&regionDev);
+
+    /* Now Safe to enable MMU */
+    MMUEnable((unsigned int*)pageTable);
+}
+#endif
+
+
+
+/*---------------------------------------------------------------------------*/
+/*
+** This function configures the AINTC to receive EDMA3 interrupts.
+*/
+#ifdef ARM_SUPPORTED
+static void EDMA3AINTCConfigure(void)
+{
+    /* Initializing the ARM Interrupt Controller. */
+    IntAINTCInit();
+
+    /* Registering EDMA3 Channel Controller transfer completion interrupt.  */
+    IntRegister(EDMA_COMPLTN_INT_NUM, Edma3CompletionIsr);
+
+    /* Setting the priority for EDMA3CC completion interrupt in AINTC. */
+    IntPrioritySet(EDMA_COMPLTN_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
+
+    /* Registering EDMA3 Channel Controller Error Interrupt. */
+    IntRegister(EDMA_ERROR_INT_NUM, Edma3CCErrorIsr);
+
+    /* Setting the priority for EDMA3CC Error interrupt in AINTC. */
+    IntPrioritySet(EDMA_ERROR_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
+
+    /* Enabling the EDMA3CC completion interrupt in AINTC. */
+    IntSystemEnable(EDMA_COMPLTN_INT_NUM);
+
+    /* Enabling the EDMA3CC Error interrupt in AINTC. */
+    IntSystemEnable(EDMA_ERROR_INT_NUM);
+
+    /* Registering HSMMC Interrupt handler */
+    IntRegister(MMCSD_INT_NUM, MMCSDIsr);
+
+    /* Setting the priority for EDMA3CC completion interrupt in AINTC. */
+    IntPrioritySet(MMCSD_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
+
+    /* Enabling the HSMMC interrupt in AINTC. */
+    IntSystemEnable(MMCSD_INT_NUM);
+
+    /* Enabling IRQ in CPSR of ARM processor. */
+    IntMasterIRQEnable();
+}
+#else
+#if 0 // -- ertl-liyixiao
+static void EDMA3AINTCConfigure(void)
+{
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+  /* Initialize DSP interrupt controller */
+  IntDSPINTCInit();
+
+  IntRegister(C674X_MASK_INT4, Edma3CompletionIsr);
+  IntRegister(C674X_MASK_INT5, Edma3CCErrorIsr);
+
+  IntEventMap(C674X_MASK_INT4, SYS_INT_EDMA3_0_CC0_INT1);
+  IntEventMap(C674X_MASK_INT5, SYS_INT_EDMA3_0_CC0_ERRINT);
+
+  IntEnable(C674X_MASK_INT4);
+  IntEnable(C674X_MASK_INT5);
+
+  IntRegister(C674X_MASK_INT6, MMCSDIsr);
+  IntEventMap(C674X_MASK_INT6, SYS_INT_MMCSD0_INT0);
+  IntEnable(C674X_MASK_INT6);
+
+  /* Enable DSP interrupts globally */
+  IntGlobalEnable();
+}
+#endif
+#endif
+
+/*---------------------------------------------------------------------------*/
+/*
+** Powering up, initializing and registering interrupts for EDMA.
+*/
+#if 0 // -- ertl-liyixiao
+static void EDMA3Initialize(void)
+{
+#if DEBUG_PRINT
+  UARTprintf("%s()\r\n", __FUNCTION__);
+#endif
+    /* Initialization of EDMA3 */
+    EDMA3Init(EDMA_INST_BASE, EVT_QUEUE_NUM);
+
+    /* Configuring the AINTC to receive EDMA3 interrupts. */
+    EDMA3AINTCConfigure();
+}
+#endif
 
 /*---------------------------------------------------------------------------*/
 #if 0
@@ -749,422 +1120,4 @@ static void Edma3CCErrorIsr(void)
 }
 #endif
 
-/*---------------------------------------------------------------------------*/
-void MMCSDIsr(intptr_t unused)
-{
-  volatile unsigned int status = 0;
-
-  status = MMCSDIntrStatusGetAndClr(ctrlInfo.memBase);
-
-#if defined(DEBUG) || 0
-  syslog(LOG_ERROR, "%s(): status=0x%08x", __FUNCTION__, status); // TODO: added by ertl-liyixiao
-//  intrStatus = status;
 #endif
-
-  if (status & MMCSD_STAT_CMDCOMP)
-  {
-//    cmdCompFlag = 1;
-	  iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_CMDCOMP);
-#if defined(DEBUG) || 0
-  syslog(LOG_ERROR, "%s(): cmdCompFlag", __FUNCTION__);
-#endif
-  }
-
-  if (status & MMCSD_STAT_CMDTIMEOUT)
-  {
-//    cmdTimeout = 1;
-	  iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_CMDTIMEOUT);
-#if defined(DEBUG) || 1
-    syslog(LOG_ERROR, "%s(): cmdTimeout!!", __FUNCTION__);
-#endif
-  }
-
-  if (status & MMCSD_STAT_DATATIMEOUT)
-  {
-//    dataTimeout = 1;
-	  iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_DATATIMEOUT);
-    syslog(LOG_ERROR, "%s(): dataTimeout!!", __FUNCTION__);
-  }
-
-  if (status & MMCSD_STAT_DATACRCERR)
-  {
-//    dataCRCError = 1;
-	  iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_DATACRCERR);
-    syslog(LOG_ERROR, "%s(): dataCRCError!!", __FUNCTION__);
-  }
-
-  if (status & MMCSD_MMCST0_DATDNE/* IMPORTANT: MMCSD_STAT_TRNFCOMP IS WRONG -- ertl-liyixiao */)
-  {
-//    xferCompFlag = 1;
-	  iset_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_XFERCOMP);
-#if defined(DEBUG) || 0
-  syslog(LOG_ERROR, "%s(): xferCompFlag", __FUNCTION__);
-#endif
-  }
-}
-
-
-/*---------------------------------------------------------------------------*/
-/*
-** This function configures the AINTC to receive EDMA3 interrupts.
-*/
-#ifdef ARM_SUPPORTED
-static void EDMA3AINTCConfigure(void)
-{
-    /* Initializing the ARM Interrupt Controller. */
-    IntAINTCInit();
-
-    /* Registering EDMA3 Channel Controller transfer completion interrupt.  */
-    IntRegister(EDMA_COMPLTN_INT_NUM, Edma3CompletionIsr);
-
-    /* Setting the priority for EDMA3CC completion interrupt in AINTC. */
-    IntPrioritySet(EDMA_COMPLTN_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
-
-    /* Registering EDMA3 Channel Controller Error Interrupt. */
-    IntRegister(EDMA_ERROR_INT_NUM, Edma3CCErrorIsr);
-
-    /* Setting the priority for EDMA3CC Error interrupt in AINTC. */
-    IntPrioritySet(EDMA_ERROR_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
-
-    /* Enabling the EDMA3CC completion interrupt in AINTC. */
-    IntSystemEnable(EDMA_COMPLTN_INT_NUM);
-    
-    /* Enabling the EDMA3CC Error interrupt in AINTC. */
-    IntSystemEnable(EDMA_ERROR_INT_NUM);
-
-    /* Registering HSMMC Interrupt handler */
-    IntRegister(MMCSD_INT_NUM, MMCSDIsr);
-
-    /* Setting the priority for EDMA3CC completion interrupt in AINTC. */
-    IntPrioritySet(MMCSD_INT_NUM, 0, AINTC_HOSTINT_ROUTE_IRQ);
-
-    /* Enabling the HSMMC interrupt in AINTC. */
-    IntSystemEnable(MMCSD_INT_NUM);
-
-    /* Enabling IRQ in CPSR of ARM processor. */
-    IntMasterIRQEnable();
-}
-#else
-#if 0 // -- ertl-liyixiao
-static void EDMA3AINTCConfigure(void)
-{
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-  /* Initialize DSP interrupt controller */
-  IntDSPINTCInit();
-
-  IntRegister(C674X_MASK_INT4, Edma3CompletionIsr);
-  IntRegister(C674X_MASK_INT5, Edma3CCErrorIsr);
-
-  IntEventMap(C674X_MASK_INT4, SYS_INT_EDMA3_0_CC0_INT1);
-  IntEventMap(C674X_MASK_INT5, SYS_INT_EDMA3_0_CC0_ERRINT);
-
-  IntEnable(C674X_MASK_INT4);
-  IntEnable(C674X_MASK_INT5);
-
-  IntRegister(C674X_MASK_INT6, MMCSDIsr);
-  IntEventMap(C674X_MASK_INT6, SYS_INT_MMCSD0_INT0);
-  IntEnable(C674X_MASK_INT6);
-
-  /* Enable DSP interrupts globally */
-  IntGlobalEnable();
-}
-#endif
-#endif
-
-/*---------------------------------------------------------------------------*/
-/* 
-** Powering up, initializing and registering interrupts for EDMA.
-*/
-#if 0 // -- ertl-liyixiao
-static void EDMA3Initialize(void)
-{
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-    /* Initialization of EDMA3 */
-    EDMA3Init(EDMA_INST_BASE, EVT_QUEUE_NUM);
-
-    /* Configuring the AINTC to receive EDMA3 interrupts. */ 
-    EDMA3AINTCConfigure();
-}
-#endif
-
-/*---------------------------------------------------------------------------*/
-static void complCallback(intptr_t tcc) {
-	Edma3ComplCallback(tcc, EDMA3_XFER_COMPLETE);
-}
-
-static void MMCSDEdmaInit(void)
-{
-#if 0
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-  /* Initializing the EDMA. */
-  EDMA3Initialize();
-
-  /* Request DMA Channel and TCC for MMCSD Transmit*/
-  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
-                      MMCSD_TX_EDMA_CHAN, MMCSD_TX_EDMA_CHAN,
-                      EVT_QUEUE_NUM);
-
-  /* Registering Callback Function for TX*/
-  cb_Fxn[MMCSD_TX_EDMA_CHAN] = &Edma3ComplCallback;
-
-  /* Request DMA Channel and TCC for UART Receive */
-  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
-                      MMCSD_RX_EDMA_CHAN, MMCSD_RX_EDMA_CHAN,
-                      EVT_QUEUE_NUM);
-
-  /* Registering Callback Function for RX*/
-  cb_Fxn[MMCSD_RX_EDMA_CHAN] = &Edma3ComplCallback;
-#endif
-  /* Request DMA Channel and TCC for MMCSD Transmit*/
-  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
-                      MMCSD_TX_EDMA_CHAN, MMCSD_TX_EDMA_CHAN,
-                      EVT_QUEUE_NUM);
-
-  EDMA30SetComplIsr(MMCSD_TX_EDMA_CHAN, complCallback, MMCSD_TX_EDMA_CHAN);
-
-  /* Request DMA Channel and TCC for MMCSD Receive */
-  EDMA3RequestChannel(EDMA_INST_BASE, EDMA3_CHANNEL_TYPE_DMA,
-                      MMCSD_RX_EDMA_CHAN, MMCSD_RX_EDMA_CHAN,
-                      EVT_QUEUE_NUM);
-
-  EDMA30SetComplIsr(MMCSD_RX_EDMA_CHAN, complCallback, MMCSD_RX_EDMA_CHAN);
-}
-
-/*---------------------------------------------------------------------------*/
-/*
-** Initialize the MMCSD controller structure for use
-*/
-static void MMCSDControllerSetup(void)
-{
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-  ctrlInfo.memBase        = MMCSD_INST_BASE;
-  ctrlInfo.ctrlInit       = MMCSDLibControllerInit;
-  ctrlInfo.xferSetup      = MMCSDXferSetup;
-  ctrlInfo.cmdStatusGet   = MMCSDCmdStatusGet;
-  ctrlInfo.xferStatusGet  = MMCSDXferStatusGet;
-  ctrlInfo.cardPresent    = MMCSDLibCardPresent;
-  ctrlInfo.cmdSend        = MMCSDLibCmdSend;
-  ctrlInfo.busWidthConfig = MMCSDLibBusWidthConfig;
-  ctrlInfo.busFreqConfig  = MMCSDLibBusFreqConfig;
-  ctrlInfo.intrMask       = (MMCSD_INTR_CMDCOMP | MMCSD_INTR_CMDTIMEOUT |
-                             MMCSD_INTR_DATATIMEOUT | MMCSD_INTR_TRNFCOMP |
-                             MMCSD_INTR_DATACRCERR);
-  ctrlInfo.intrMask = 0xFFFFFFFF; // Enable all interrupts for debug -- ertl-liyixiao
-  ctrlInfo.intrEnable     = MMCSDLibIntrEnable;
-  ctrlInfo.busWidth       = (SD_BUS_WIDTH_1BIT | SD_BUS_WIDTH_4BIT);
-  ctrlInfo.highspeed      = 1;
-  ctrlInfo.ocr            = (SD_OCR_VDD_3P0_3P1 | SD_OCR_VDD_3P1_3P2);
-  ctrlInfo.card           = &sdCard;
-  ctrlInfo.ipClk          = MMCSD_IN_FREQ;
-  ctrlInfo.opClk          = MMCSD_INIT_FREQ;
-  ctrlInfo.cdPinNum       = MMCSD_CARD_DETECT_PINNUM;
-  sdCard.ctrl             = &ctrlInfo;
-
-//  dmaIsRunning = 0;
-//  xferCompFlag = 0;
-//  dataTimeout = 0;
-//  dataCRCError = 0;
-//  cmdCompFlag = 0;
-//  cmdTimeout = 0;
-  ER ercd = clr_flg(MMCSD_ISR_FLG, 0x0);
-  assert(ercd == E_OK);
-  ercd = set_flg(MMCSD_ISR_FLG, MMCSD_ISR_FLGPTN_DMACOMP);
-  assert(ercd == E_OK);
-#if defined(DEBUG) && 0
-  syslog(LOG_ERROR, "%s(): set_flg(MMCSD_ISR_FLGPTN_DMACOMP)", __FUNCTION__);
-#endif
-}
-
-#if 0 // TODO: Unused. EDMA and MMC/SD modules should have been enabled somewhere else. -- ertl-liyixiao
-/*---------------------------------------------------------------------------*/
-// Should be in platform edma.c aka lcdkC6478_edma.c.
-static void EDMAModuleClkConfig(void)
-{
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-  /* Enabling the PSC for EDMA3CC_0).*/
-  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_CC0, PSC_POWERDOMAIN_ALWAYS_ON,
-                   PSC_MDCTL_NEXT_ENABLE);
-
-  /* Enabling the PSC for EDMA3TC_0.*/
-  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_TC0, PSC_POWERDOMAIN_ALWAYS_ON,
-                   PSC_MDCTL_NEXT_ENABLE);
-}
-
-/*---------------------------------------------------------------------------*/
-// Should be in platform mmcsd.c aka lcdkC6478_mmcsd.c.
-static void MMCSDModuleClkConfig(void)
-{
-#if DEBUG_PRINT
-  UARTprintf("%s()\r\n", __FUNCTION__);
-#endif
-
-#if 1
-  PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_MMCSD0, PSC_POWERDOMAIN_ALWAYS_ON,
-                   PSC_MDCTL_NEXT_ENABLE);
-#else
-  PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_MMCSD1, PSC_POWERDOMAIN_ALWAYS_ON,
-                   PSC_MDCTL_NEXT_ENABLE);
-#endif
-}
-
-/*---------------------------------------------------------------------------*/
-
-int main(void)
-{
-    volatile unsigned int i = 0;
-    volatile unsigned int initFlg = 1;
-
-#ifdef ARM_SUPPORTED
-    /* Setup the MMU and do necessary MMU configurations. */
-    MMUConfigAndEnable();
-#endif
-
-#ifdef CACHE_SUPPORTED
-    /* Enable all levels of CACHE. */
-    CacheEnable(CACHE_ALL);
-#endif
-
-    /* Initialize UART. */
-    UARTStdioInit();
-
-    /* Configure the EDMA clocks. */
-    EDMAModuleClkConfig();
-
-    /* Configure EDMA to service the MMCSD events. */
-    MMCSDEdmaInit();
-
-    /* Perform pin-mux for MMCSD pins. */
-    MMCSDPinMuxSetup();
-
-    /* Enable module clock for MMCSD. */
-    MMCSDModuleClkConfig();
-
-    DelayTimerSetup();
-
-#ifdef MMCSD_PERF
-    PerfTimerSetup();
-#endif
-
-    /* Basic controller initializations */
-    MMCSDControllerSetup();
-
-    /* Initialize the MMCSD controller */
-    MMCSDCtrlInit(&ctrlInfo);
-
-    MMCSDIntEnable(&ctrlInfo);
-
-#if 0
-    UARTPuts("Test timer:wait 5s\r\n", -1);
-    delay(5000);
-    UARTPuts("Test timer:Done\r\n", -1);
-#endif
-
-    for(;;)
-    {
-        if((MMCSDCardPresent(&ctrlInfo)) == 1)
-        {
-#if DEBUG_PRINT
-            UARTPuts("Card is present\r\n", -1);
-#endif
-            if(initFlg)
-            {
-                UARTPuts("Call MMCSDFsMount\r\n", -1);
-                MMCSDFsMount(0, &sdCard);
-                UARTPuts("Back MMCSDFsMount\r\n", -1);
-                initFlg = 0;
-                UARTPuts("Call Cmd_help\r\n", -1);
-                Cmd_help(0, NULL);
-            }
-            MMCSDFsProcessCmdLine();
-        }
-        else
-        {
-UARTPuts("Card is not present\r\n", -1);
-delay(1000);
-//          delay(1);
-
-            i = (i + 1) & 0xFFF;
-
-            if(i == 1)
-            {
-                 UARTPuts("Please insert the card \r\n", -1);
-            }
-
-            if(initFlg != 1)
-            {
-                 /* Reinitialize all the state variables */
-                 dmaIsRunning = 0;
-                 xferCompFlag = 0;
-                 dataTimeout  = 0;
-                 dataCRCError = 0;
-                 cmdCompFlag  = 0;
-                 cmdTimeout   = 0;
-
-                 /* Initialize the MMCSD controller */
-                 MMCSDCtrlInit(&ctrlInfo);
-
-                 MMCSDIntEnable(&ctrlInfo);
-            }
-
-            initFlg = 1;
-        }
-    }
-}
-#endif
-
-extern void diskio_initialize(mmcsdCardInfo *card); // TODO: Should be somewhere else. -- ertl-liyixiao
-
-void initialize_mmcsd() {
-
-    /* Configure EDMA to service the MMCSD events. */
-    MMCSDEdmaInit();
-
-#if 0 // TODO: Check if these steps are necessary? -- ertl-liyixiao
-    /* Perform pin-mux for MMCSD pins. */
-    MMCSDPinMuxSetup();
-
-    /* Enable module clock for MMCSD. */
-    MMCSDModuleClkConfig();
-
-    DelayTimerSetup();
-#endif
-
-    /* Basic controller initializations */
-    MMCSDControllerSetup();
-
-    /* Initialize the MMCSD controller */
-    MMCSDCtrlInit(&ctrlInfo);
-
-    MMCSDIntEnable(&ctrlInfo);
-
-    /* Check SD card status */
-    while(1) {
-    	if((MMCSDCardPresent(&ctrlInfo)) == 1) {
-    		syslog(LOG_DEBUG, "Card is present");
-    		break;
-    	}
-    	syslog(LOG_ERROR, "Card is not present");
-    	tslp_tsk(1000);
-    }
-
-    /* Initialize device control interface for FatFS */
-    diskio_initialize(&sdCard);
-
-//    static char tmpBuf[1024] __attribute__ ((aligned (SOC_EDMA3_ALIGN_SIZE)));
-//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    dump_mmc(&MMCSD0);
-//    while(1) tslp_tsk(1000);
-}

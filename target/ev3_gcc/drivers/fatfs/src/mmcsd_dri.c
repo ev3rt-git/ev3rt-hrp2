@@ -44,19 +44,6 @@ MMCSDReadWriteCmdSend(mmcsdCtrlInfo *ctrl, void *ptr, unsigned int block, unsign
 	}
 	assert(nblks == 1);
 
-#if 0 // For debug
-	syslog(LOG_ERROR, "%s()", __FUNCTION__);
-#endif
-
-	/**
-	 * Acquire mutex for thread safety.
-	 */
-	ER ercd = loc_mtx(MMCSD_RW_MTX);
-	if (ercd != E_OK) {
-		syslog(LOG_ERROR, "%s(): Failed to acquire mutex.", __FUNCTION__);
-		goto error_exit;
-	}
-
 	/* 1. Write the card's relative address to the MMC argument registers (MMCARGH and MMCARGL). */
 	volatile struct st_mmcsd *mmc = (struct st_mmcsd *)ctrl->memBase;
 	if (!ctrl->card->highCap) { // Only SDHC card is supported by now.
@@ -169,7 +156,6 @@ MMCSDReadWriteCmdSend(mmcsdCtrlInfo *ctrl, void *ptr, unsigned int block, unsign
 	// TODO: check this
 
 error_exit:
-	unl_mtx(MMCSD_RW_MTX);
 	return status;
 }
 

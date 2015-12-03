@@ -29,7 +29,7 @@
 //#include "usbdevice.h"
 #include "usblib/usbdmsc.h"
 #include "usb_msc_structs.h"
-#include "usbdmscglue.h"
+//#include "usbdmscglue.h"
 #include "cppi41dma.h"
 
 //*****************************************************************************
@@ -144,7 +144,10 @@ const unsigned char * const g_pStringDescriptors[] =
 //*****************************************************************************
 tMSCInstance g_sMSCInstance;
 
-const tUSBDMSCDevice g_sMSCDevice =
+// From 'usbmsc_dri.c'
+void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData);
+
+tUSBDMSCDevice g_sMSCDevice =
 {
     //
     // Vendor ID.
@@ -174,14 +177,8 @@ const tUSBDMSCDevice g_sMSCDevice =
     USB_CONF_ATTR_SELF_PWR,
     g_pStringDescriptors,
     NUM_STRING_DESCRIPTORS,
-    {
-        USBDMSCStorageOpen,
-        USBDMSCStorageClose,
-        USBDMSCStorageRead,
-        USBDMSCStorageWrite,
-        USBDMSCStorageNumBlocks
-    },
-    USBDMSCEventCallback,
+	{ },
+	usbmsc_event_callback,
     &g_sMSCInstance
 };
 

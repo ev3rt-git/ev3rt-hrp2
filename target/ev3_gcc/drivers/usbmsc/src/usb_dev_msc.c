@@ -42,33 +42,6 @@
 #include <t_syslog.h>
 #include "platform.h"
 
-//static ;
-
-
-
-
-//*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>USB MSC Device (usb_dev_msc)</h1>
-//!
-//! This example application turns the evaluation board into a USB mass storage
-//! class device.  The application will use the microSD card for the storage
-//! media for the mass storage device.  The screen will display the current
-//! action occurring on the device ranging from disconnected, no media, reading,
-//! writing and idle.
-//
-//*****************************************************************************
-
-
-//*****************************************************************************
-//
-// The number of ticks to wait before falling back to the idle state.  Since
-// the tick rate is 100Hz this is approximately 3 seconds.
-//
-//*****************************************************************************
-#define USBMSC_ACTIVITY_TIMEOUT 30
-
 //*****************************************************************************
 //
 // DMA Configuration.
@@ -77,81 +50,6 @@
 #define NUMBER_OF_ENDPOINTS		2 //Total number of send points(RX +TX) used in this USB configuration
 #define USB_MSC_BUFER_SIZE		512
 
-//*****************************************************************************
-//
-// This function is the call back notification function provided to the USB
-// library's mass storage class.
-//
-//*****************************************************************************
-unsigned int
-USBDMSCEventCallback(void *pvCBData, unsigned int ulEvent,
-                     unsigned int ulMsgParam, void *pvMsgData)
-{
-#if 0 // No LCD -- ertl-liyixiao
-    //
-    // Reset the time out every time an event occurs.
-    //
-    g_ulIdleTimeout = USBMSC_ACTIVITY_TIMEOUT;
-
-    switch(ulEvent)
-    {
-        //
-        // Writing to the device.
-        //
-        case USBD_MSC_EVENT_WRITING:
-        {
-            //
-            // Only update if this is a change.
-            //
-            if(g_eMSCState != MSC_DEV_WRITE)
-            {
-                //
-                // Go to the write state.
-                //
-                g_eMSCState = MSC_DEV_WRITE;
-
-                //
-                // Cause the main loop to update the screen.
-                //
-                g_ulFlags |= FLAG_UPDATE_STATUS;
-            }
-
-            break;
-        }
-
-        //
-        // Reading from the device.
-        //
-        case USBD_MSC_EVENT_READING:
-        {
-            //
-            // Only update if this is a change.
-            //
-            if(g_eMSCState != MSC_DEV_READ)
-            {
-                //
-                // Go to the read state.
-                //
-                g_eMSCState = MSC_DEV_READ;
-
-                //
-                // Cause the main loop to update the screen.
-                //
-                g_ulFlags |= FLAG_UPDATE_STATUS;
-            }
-
-            break;
-        }
-        case USBD_MSC_EVENT_IDLE:
-        default:
-        {
-            break;
-        }
-    }
-#endif
-    return(0);
-}
-
 
 #include "soc_AM1808.h"
 #include "hw_usbphyGS60.h"
@@ -159,26 +57,10 @@ USBDMSCEventCallback(void *pvCBData, unsigned int ulEvent,
 #include "hw_syscfg0_AM1808.h"
 #include "hw_usb.h"
 
-static void dump_usbmsc() {
-	syslog(LOG_EMERG, "USB0 OTG registers:");
-	syslog(LOG_EMERG, "CFGCHIP2:  0x%08x", HWREG(CFGCHIP2_USBPHYCTRL));
-	syslog(LOG_EMERG, "CTRL:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_CTRL));
-	syslog(LOG_EMERG, "STAT:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_STAT));
-	syslog(LOG_EMERG, "EMULATION: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_EMULATION));
-	syslog(LOG_EMERG, "MODE:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_MODE));
-	syslog(LOG_EMERG, "INTR_SRC:  0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_SRC));
-	syslog(LOG_EMERG, "INTR_MASK: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_MASK));
-	syslog(LOG_EMERG, "INTR_SRC_MASKED: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_MASKED));
-	syslog(LOG_EMERG, "Common USB registers:");
-    syslog(LOG_EMERG, "FADDR:     0x%08x", HWREGB(USB0_BASE + USB_O_FADDR));
-    syslog(LOG_EMERG, "POWER:     0x%08x", HWREGB(USB0_BASE + USB_O_POWER));
-    syslog(LOG_EMERG, "INTRUSB:   0x%08x", HWREGB(USB0_BASE + USB_O_IS));
-    syslog(LOG_EMERG, "INTRUSBE:  0x%08x", HWREGB(USB0_BASE + USB_O_IE));
-    syslog(LOG_EMERG, "TESTMODE:  0x%08x", HWREGB(USB0_BASE + USB_O_TEST));
-    syslog(LOG_EMERG, "DEVCTL:    0x%08x", HWREGB(USB0_BASE + USB_O_DEVCTL));
-}
-
 unsigned int g_bufferIndex = 0;
+
+// From 'usbmsc_media_functions.c'
+extern const tMSCDMedia usbmsc_media_functions_dummy;
 
 static void initialize(intptr_t unused) {
 	// Initialize USB OTG
@@ -186,11 +68,8 @@ static void initialize(intptr_t unused) {
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_FORCE_DEVICE;  // Force USB device operation
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_REFFREQ_24MHZ; // 24 MHz OSCIN
 
-
+    g_sMSCDevice.sMediaFunctions = usbmsc_media_functions_dummy;
     USBDMSCInit(0, (tUSBDMSCDevice *)&g_sMSCDevice);
-
-    //HWREG(CFGCHIP2_USBPHYCTRL) &= ~SYSCFG_CFGCHIP2_USB0OTGMODE;
-    //HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_REFFREQ_24MHZ | CFGCHIP2_FORCE_DEVICE; // 24 MHz OSCIN
 
 #if defined(DMA_MODE)
 	Cppi41DmaInit(USB_INSTANCE, epInfo, NUMBER_OF_ENDPOINTS);
@@ -202,9 +81,9 @@ static void initialize(intptr_t unused) {
 	}
 #endif
 
-    //dump_usbmsc();
+//    dump_usbmsc();
 
-#if defined(DEBUG) || 1
+#if defined(DEBUG_USBMSC)
     syslog(LOG_EMERG, "usbmsc_dri initialized.");
 #endif
 }
@@ -826,5 +705,99 @@ static void SetupIntc(void)
     IntIRQEnable();
 }
 #endif
+
+//*****************************************************************************
+//
+// This function is the call back notification function provided to the USB
+// library's mass storage class.
+//
+//*****************************************************************************
+unsigned int
+USBDMSCEventCallback(void *pvCBData, unsigned int ulEvent,
+                     unsigned int ulMsgParam, void *pvMsgData)
+{
+#if 0 // No LCD -- ertl-liyixiao
+    //
+    // Reset the time out every time an event occurs.
+    //
+    g_ulIdleTimeout = USBMSC_ACTIVITY_TIMEOUT;
+
+    switch(ulEvent)
+    {
+        //
+        // Writing to the device.
+        //
+        case USBD_MSC_EVENT_WRITING:
+        {
+            //
+            // Only update if this is a change.
+            //
+            if(g_eMSCState != MSC_DEV_WRITE)
+            {
+                //
+                // Go to the write state.
+                //
+                g_eMSCState = MSC_DEV_WRITE;
+
+                //
+                // Cause the main loop to update the screen.
+                //
+                g_ulFlags |= FLAG_UPDATE_STATUS;
+            }
+
+            break;
+        }
+
+        //
+        // Reading from the device.
+        //
+        case USBD_MSC_EVENT_READING:
+        {
+            //
+            // Only update if this is a change.
+            //
+            if(g_eMSCState != MSC_DEV_READ)
+            {
+                //
+                // Go to the read state.
+                //
+                g_eMSCState = MSC_DEV_READ;
+
+                //
+                // Cause the main loop to update the screen.
+                //
+                g_ulFlags |= FLAG_UPDATE_STATUS;
+            }
+
+            break;
+        }
+        case USBD_MSC_EVENT_IDLE:
+        default:
+        {
+            break;
+        }
+    }
+#endif
+    return(0);
+}
+
+static void dump_usbmsc() {
+	syslog(LOG_EMERG, "USB0 OTG registers:");
+	syslog(LOG_EMERG, "CFGCHIP2:  0x%08x", HWREG(CFGCHIP2_USBPHYCTRL));
+	syslog(LOG_EMERG, "CTRL:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_CTRL));
+	syslog(LOG_EMERG, "STAT:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_STAT));
+	syslog(LOG_EMERG, "EMULATION: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_EMULATION));
+	syslog(LOG_EMERG, "MODE:      0x%08x", HWREG(USB_0_OTGBASE + USB_0_MODE));
+	syslog(LOG_EMERG, "INTR_SRC:  0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_SRC));
+	syslog(LOG_EMERG, "INTR_MASK: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_MASK));
+	syslog(LOG_EMERG, "INTR_SRC_MASKED: 0x%08x", HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_MASKED));
+	syslog(LOG_EMERG, "Common USB registers:");
+    syslog(LOG_EMERG, "FADDR:     0x%08x", HWREGB(USB0_BASE + USB_O_FADDR));
+    syslog(LOG_EMERG, "POWER:     0x%08x", HWREGB(USB0_BASE + USB_O_POWER));
+    syslog(LOG_EMERG, "INTRUSB:   0x%08x", HWREGB(USB0_BASE + USB_O_IS));
+    syslog(LOG_EMERG, "INTRUSBE:  0x%08x", HWREGB(USB0_BASE + USB_O_IE));
+    syslog(LOG_EMERG, "TESTMODE:  0x%08x", HWREGB(USB0_BASE + USB_O_TEST));
+    syslog(LOG_EMERG, "DEVCTL:    0x%08x", HWREGB(USB0_BASE + USB_O_DEVCTL));
+}
 
 #endif

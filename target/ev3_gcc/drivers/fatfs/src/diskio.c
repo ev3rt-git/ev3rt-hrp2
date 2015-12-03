@@ -8,6 +8,7 @@
 #include "fatfs_dri.h"
 #include <t_syslog.h>
 #include "syssvc/serial.h"
+#include "kernel_cfg.h"
 #include "../starterware_c6748_mmcsd/src/mmcsd_proto.h"
 #include "../ff10b/src/ff.h"
 #include "../ff10b/src/diskio.h"
@@ -23,7 +24,7 @@ typedef struct {
     void *dev;
 
     /* File system pointer */
-    FATFS *fs;
+//    FATFS *fs; -- unused
 
     /* state */
     unsigned int initDone;
@@ -32,17 +33,11 @@ typedef struct {
 
 static fatDevice fat_devices[DRIVE_NUM_MAX]; /* Declared in fat_mmcsd.c */
 
-static FATFS g_sFatFs;
-
 void
 diskio_initialize(mmcsdCardInfo *card) {
     fat_devices[DRIVE_NUM_MMCSD].dev = card;
-    fat_devices[DRIVE_NUM_MMCSD].fs = &g_sFatFs;
+//    fat_devices[DRIVE_NUM_MMCSD].fs = &g_sFatFs;
     fat_devices[DRIVE_NUM_MMCSD].initDone = 0;
-    FRESULT ret = f_mount(&g_sFatFs, "0:/", 1);
-    if (ret != FR_OK) {
-    	syslog(LOG_ERROR, "%s(): f_mount() failed. FRESULT: %d.", __FUNCTION__, ret);
-    }
 }
 
 /*-----------------------------------------------------------------------*/
@@ -136,20 +131,28 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read (1..128) */
 )
 {
+	DRESULT res;
+
 	if (pdrv != DRIVE_NUM_MMCSD) {
 		syslog(LOG_ERROR, "%s(pdrv=%d): Invalid physical drive number", __FUNCTION__, pdrv);
 		return RES_PARERR;
 	}
 
-	mmcsdCardInfo *card = fat_devices[pdrv].dev;
+	ER ercd = loc_mtx(DISKIO_MTX);
+	assert(ercd == E_OK);
 
 	/* READ BLOCK */
-	if (MMCSDReadCmdSend(card->ctrl, buff, sector, count) == 1) {
-    	return RES_OK;
+	if (mmcsd_blockread(buff, sector, count)) {
+		res = RES_OK;
 	} else {
 		syslog(LOG_ERROR, "%s(pdrv=%d): MMCSDReadCmdSend failed", __FUNCTION__, pdrv);
-		return RES_ERROR;
+		res = RES_ERROR;
 	}
+
+	ercd = unl_mtx(DISKIO_MTX);
+	assert(ercd == E_OK);
+
+	return res;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -164,20 +167,30 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write (1..128) */
 )
 {
+	DRESULT res;
+
 	if (pdrv != DRIVE_NUM_MMCSD) {
 		syslog(LOG_ERROR, "%s(pdrv=%d): Invalid physical drive number", __FUNCTION__, pdrv);
 		return RES_PARERR;
 	}
 
+	ER ercd = loc_mtx(DISKIO_MTX);
+	assert(ercd == E_OK);
+
 	mmcsdCardInfo *card = fat_devices[pdrv].dev;
 
 	/* WRITE BLOCK */
 	if (MMCSDWriteCmdSend(card->ctrl,(BYTE*) buff, sector, count) == 1) {
-    	return RES_OK;
+    	res = RES_OK;
 	} else {
 		assert(false);
-		return RES_ERROR;
+		res = RES_ERROR;
 	}
+
+	ercd = unl_mtx(DISKIO_MTX);
+	assert(ercd == E_OK);
+
+	return res;
 }
 #endif
 

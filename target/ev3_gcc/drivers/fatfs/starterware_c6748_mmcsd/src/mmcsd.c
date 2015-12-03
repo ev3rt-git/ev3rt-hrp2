@@ -459,7 +459,7 @@ void MMCSDCommandSend(unsigned int baseAddr, unsigned int cmd,
 		cmd |= MMCSD_MMCCMD_DMATRIG;
 
 		/* Set the command */
-#if defined(DEBUG)
+#if defined(DEBUG_FATFS_MMCSD)
   syslog(LOG_ERROR, "%s(): Send CMD%d, MMCSD_MMCCMD: 0x%x", __FUNCTION__, cmd & 0x3F, cmd);
 #endif
 		HWREG(baseAddr + MMCSD_MMCCMD) = cmd;
@@ -496,7 +496,7 @@ void MMCSDCommandSend(unsigned int baseAddr, unsigned int cmd,
 		cmd |= MMCSD_MMCCMD_DMATRIG;
 
 		/* Set the command */
-#if defined(DEBUG) || 1
+#if defined(DEBUG_FATFS_MMCSD)
   syslog(LOG_ERROR, "%s(): Send CMD%d, MMCSD_MMCCMD: 0x%x", __FUNCTION__, cmd & 0x3F, cmd);
 #endif
 		HWREG(baseAddr + MMCSD_MMCCMD) = cmd;
@@ -570,7 +570,7 @@ void MMCSDCommandSend(unsigned int baseAddr, unsigned int cmd,
   HWREG(baseAddr + MMCSD_MMCNBLK) |= nblks << MMCSD_MMCNBLK_NBLK_SHIFT;
 
   /* Set the command/command argument */
-#if defined(DEBUG) || 1
+#if defined(DEBUG_FATFS_MMCSD)
   syslog(LOG_ERROR, "%s(): Send CMD%d, MMCSD_MMCCMD: 0x%x", __FUNCTION__, cmd & 0x3F, cmd);
 #endif
   HWREG(baseAddr + MMCSD_MMCARGHL) = cmdarg;

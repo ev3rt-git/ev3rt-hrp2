@@ -17,11 +17,17 @@ LDFLAGS := $(LDFLAGS) -L$(REAL_PWD)/lib
 APPL_LIBS += -lusblib
 	
 APPL_COBJS += usbmsc_dri.o \
+	usbmsc_media_functions.o \
 	usb_dev_msc.o \
-	usb_msc_structs.o \
-	usbdmscglue.o \
-	ramdisk.o
+	usb_msc_structs.o
 
+# For debug
+#COPTS += -DDEBUG_USBMSC
+
+# Debug usblib
+#COPTS += -DDEBUG_USBMSC_USBLIB
+SYSSVC_DIR := $(SYSSVC_DIR) $(REAL_PWD)/debug
+APPL_COBJS += usbdmsc.o usbdenum.o
 # For debugging usblib
 #	debug_usbdenum.o \
-#	debug_usbdmsc.o
+#	
