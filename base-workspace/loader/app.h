@@ -59,7 +59,6 @@
 #define	STACK_SIZE		4096		/* タスクのスタックサイズ */
 #endif /* STACK_SIZE */
 
-#define BOOTAPP_PATH  ("/ev3rt/bootapp")
 #define SD_APP_FOLDER "/ev3rt/apps"
 
 
@@ -96,15 +95,17 @@ extern const CliMenu climenu_main;
 extern ER load_application(const void *mod_data, SIZE mod_data_sz);
 
 /**
+ * Application status
+ */
+#define APP_STATUS_RUNNING   (1 << 0)
+#define APP_STATUS_UNLOAD (1 << 1)
+
+/**
  * Tasks
  */
 extern void	main_task(intptr_t exinf);
 extern void	zmodem_recv_task(intptr_t exinf);
-
-/**
- * Cyclic handlers
- */
-void app_ter_btn_alm(intptr_t exinf);
+extern void	application_terminate_task(intptr_t);
 
 /**
  * Exception handlers

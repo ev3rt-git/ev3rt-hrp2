@@ -43,6 +43,7 @@
 #define CONSOLE_LOG_VIEW_LINES       (CONSOLE_LOG_VIEW_AREA_HEIGHT / CONSOLE_LOG_VIEW_FONT_HEIGHT) // Number of lines in log view
 #define CONSOLE_LOG_VIEW_LINE_WIDTH  (CONSOLE_LOG_VIEW_AREA_WIDTH / CONSOLE_LOG_VIEW_FONT_WIDTH)   // Number of characters in a line
 
+void ev3rt_console_set_visibility(bool_t visible);
 void console_menu_perform_action(intptr_t action);
 
 #define ev3rt_console_button_flag (EV3RT_CONSOLE_BTN_FLG)

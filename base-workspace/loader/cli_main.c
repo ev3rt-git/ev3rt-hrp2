@@ -33,6 +33,7 @@ bl debug_exc
 pop {r0-r3, r12, r14}
 #endif
 
+#if 0 // Legacy code
 void load_bootapp() {
 	// Open
 	static FIL fil;
@@ -75,6 +76,7 @@ void load_bootapp() {
 		tslp_tsk(500);
 	}
 }
+#endif
 
 static
 void test_sd_loader(intptr_t unused) {
@@ -249,18 +251,12 @@ void test_serial_loader(intptr_t portid) {
 	}
 }
 
-static
-void shutdown(intptr_t unused) {
-//	syslog(LOG_NOTICE, "Shutdown EV3...");
-//	ext_ker();
-}
-
 static const CliMenuEntry entry_tab[] = {
 	{ .key = '1', .title = "SD card", .handler = test_sd_loader },
 	{ .key = '2', .title = "Bluetooth", .handler = test_serial_loader, .exinf = SIO_PORT_BT },
 	{ .key = '3', .title = "Serial port 1", .handler = test_serial_loader, .exinf = SIO_PORT_UART  },
 //	{ .key = 'D', .title = "Download Application", },
-	{ .key = 'Q', .title = "Exit to console", .handler = shutdown },
+	{ .key = 'Q', .title = "Exit to console", .handler = NULL },
 };
 
 const CliMenu climenu_main = {
@@ -274,12 +270,14 @@ ER application_load_menu() {
 	load_success = false;
 	show_cli_menu(&climenu_main);
 	const CliMenuEntry *cme = select_menu_entry(&climenu_main);
-	if(cme != NULL) {
-		assert(cme->handler != NULL);
-		cme->handler(cme->exinf);
+	if(cme != NULL && cme->handler != NULL) {
+		if (try_acquire_mmcsd() == E_OK) {
+			cme->handler(cme->exinf);
+			if (load_success) return E_OK; // MMCSD will be released on unloading
+			release_mmcsd();
+		} else {
+			show_message_box("Error", "Please unplug   the USB cable!");
+		}
 	}
-	if (load_success)
-		return E_OK;
-	else
-		return E_PAR;
+	return E_PAR;
 }

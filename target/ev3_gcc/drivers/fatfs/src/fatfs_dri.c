@@ -20,13 +20,18 @@
  * 2. USB MSC (when connected)
  * 3. Loader (when a command using the SD card is selected)
  */
+
+ER try_acquire_mmcsd() {
+	return pol_sem(MMCSD_MOD_SEM);
+}
+
 void acquire_mmcsd() {
-	ER ercd = loc_mtx(MMCSD_MOD_MTX);
+	ER ercd = wai_sem(MMCSD_MOD_SEM);
 	assert(ercd == E_OK);
 }
 
 void release_mmcsd() {
-	ER ercd = unl_mtx(MMCSD_MOD_MTX);
+	ER ercd = sig_sem(MMCSD_MOD_SEM);
 	assert(ercd == E_OK);
 }
 

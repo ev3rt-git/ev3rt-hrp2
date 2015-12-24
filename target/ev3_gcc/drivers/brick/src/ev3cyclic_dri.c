@@ -150,10 +150,12 @@ void destroy_all_ev3cyc() {
     SIZE count = tmax_ev3cycid;
     tmax_ev3cycid = 0; // Invalid all handlers
 
+    ER ercd;
     for (SIZE ev3cycid = 1; ev3cycid <= count; ++ev3cycid) {
     	const EV3CYCINIB *cycinib  = get_cycinib(ev3cycid);
     	SVC_PERROR(del_cyc(cycinib->cyclic));
-    	SVC_PERROR(ter_tsk(cycinib->task)); // TODO: use ras_tex() instead
+    	ercd = ter_tsk(cycinib->task); // TODO: use ras_tex() instead
+    	assert(ercd == E_OK || ercd == E_OBJ);
     	SVC_PERROR(del_tsk(cycinib->task));
     }
 }

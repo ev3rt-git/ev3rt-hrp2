@@ -13,6 +13,7 @@
 #include "usblib/usblib.h"
 #include "usblib/usbdmsc.h"
 #include "usb_msc_structs.h"
+#include "csl.h"
 
 // From 'usbmsc_media_functions.c'
 extern const tMSCDMedia usbmsc_media_functions_mmcsd;
@@ -35,6 +36,10 @@ void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ul
 #endif
 			connected = true;
 			iset_flg(USBMSC_EVT_FLG, USBMSC_EVT_CONNECT);
+			if (*ev3rt_usb_auto_terminate_app) {
+				application_terminate_request();
+				ev3rt_console_set_visibility(true);
+			}
 		}
 		break;
 
@@ -71,12 +76,13 @@ void usbmsc_task(intptr_t unused) {
 		ercd = wai_flg(USBMSC_EVT_FLG, USBMSC_EVT_CONNECT, TWF_ANDW, &flgptn);
 		assert(ercd == E_OK);
 		acquire_mmcsd();
-#if defined(DEBUG_USBMSC)
-		syslog(LOG_EMERG, "%s(): enable MMCSD functions", __FUNCTION__);
-#endif
+		fatfs_set_enabled(false);
+		syslog(LOG_NOTICE, "USB is connected.");
 		g_sMSCDevice.sMediaFunctions = usbmsc_media_functions_mmcsd;
 		ercd = wai_flg(USBMSC_EVT_FLG, USBMSC_EVT_DISCONN, TWF_ANDW, &flgptn);
 		assert(ercd == E_OK);
+		fatfs_set_enabled(true);
+		syslog(LOG_NOTICE, "USB is disconnected.");
 		release_mmcsd();
 	}
 }

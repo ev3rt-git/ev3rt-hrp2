@@ -19,7 +19,8 @@ static void load_app(intptr_t unused) {
 	ER ercd;
 
 	on_display_fb = lcd_screen_fb;
-	application_unload();
+	application_terminate_request();
+	application_terminate_wait();
 	platform_pause_application(true);
 	ercd = application_load_menu();
 	memset(lcd_screen_fb->pixels, 0, BITMAP_PIXELS_SIZE(lcd_screen_fb->width, lcd_screen_fb->height));

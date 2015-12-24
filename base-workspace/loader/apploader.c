@@ -5,11 +5,14 @@
 #include "kernel_cfg.h"
 #include "driver_common.h"
 #include "platform.h"
+#include "app.h"
 
-static bool_t app_loaded = false;
+//static bool_t app_loaded = false;
 
 ER load_application(const void *mod_data, SIZE mod_data_sz) {
 	ER ercd;
+
+	// MMCSD must have been acquired by current task
 
 	platform_soft_reset();
 	ercd = dmloader_ins_ldm(mod_data, mod_data_sz, 1);
@@ -17,7 +20,8 @@ ER load_application(const void *mod_data, SIZE mod_data_sz) {
 
 	if (ercd == E_OK) {
 		brick_misc_command(MISCCMD_SET_LED, TA_LED_GREEN);
-		app_loaded = true;
+		clr_flg(APP_STATUS_FLAG, ~APP_STATUS_UNLOAD);
+		//app_loaded = true;
 	} else {
 		syslog(LOG_ERROR, "Failed to load application, ercd: %d", ercd);
 	}
@@ -25,18 +29,39 @@ ER load_application(const void *mod_data, SIZE mod_data_sz) {
 	return ercd;
 }
 
-void application_unload() {
-	ER ercd;
-	if (app_loaded) {
+void application_terminate_task(intptr_t unused) {
+	FLGPTN flgptn;
+	ER ercd = pol_flg(APP_STATUS_FLAG, APP_STATUS_UNLOAD, TWF_ANDW, &flgptn);
+#if defined(DEBUG_LOADER)
+	syslog(LOG_ERROR, "%s() called, pol_flg() returns %d", __FUNCTION__, ercd);
+#endif
+
+	if (ercd == E_TMOUT) { // Application is running
 		syslog(LOG_NOTICE, "Terminate application.");
 		ercd = dmloader_rmv_ldm(1);
 		assert(ercd == E_OK);
-		app_loaded = false;
+		//app_loaded = false;
 		platform_soft_reset();
 		brick_misc_command(MISCCMD_SET_LED, TA_LED_GREEN);
+		release_mmcsd();
+		set_flg(APP_STATUS_FLAG, APP_STATUS_UNLOAD);
+	} else {
+		assert(ercd == E_OK); // Application is not running
 	}
 }
 
+void application_terminate_request() {
+	ER ercd = sns_ctx() ? iact_tsk(APP_TERM_TASK) : act_tsk(APP_TERM_TASK);
+	assert(ercd == E_OK);
+}
+
+void application_terminate_wait() {
+	FLGPTN flgptn;
+	ER ercd = wai_flg(APP_STATUS_FLAG, APP_STATUS_UNLOAD, TWF_ANDW, &flgptn);
+	assert(ercd == E_OK);
+}
+
+#if 0
 typedef ulong_t	EVTTIM;
 extern EVTTIM _kernel_current_time; // From time_event.c
 
@@ -60,6 +85,7 @@ void app_ter_btn_alm(intptr_t exinf) {
 	}
 	ista_alm(APP_TER_BTN_ALM, 10);
 }
+#endif
 
 // Maybe not that critical
 #undef LOG_EMERG

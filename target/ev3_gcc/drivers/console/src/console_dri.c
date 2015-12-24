@@ -183,7 +183,7 @@ void initialize_console_dri() {
  * Interface for CSL
  */
 
-static void ev3rt_console_set_visibility(bool_t visible) {
+void ev3rt_console_set_visibility(bool_t visible) {
 #if 0
 	if (loc_mtx(EV3RT_CONSOLE_LOG_MTX) != E_OK) {
 		assert(false);
@@ -192,7 +192,7 @@ static void ev3rt_console_set_visibility(bool_t visible) {
 #endif
 	ER ercd;
 
-	ercd = loc_cpu();
+	ercd = sns_ctx() ? iloc_cpu() : loc_cpu();
 	assert(ercd == E_OK);
 
 	if (console_visible != visible) { // visibility changed
@@ -208,7 +208,7 @@ static void ev3rt_console_set_visibility(bool_t visible) {
 		log_view_scroll_mode = false;
 	}
 
-	ercd = unl_cpu();
+	ercd = sns_ctx() ? iunl_cpu(): unl_cpu();
 	assert(ercd == E_OK);
 #if 0
 	if (unl_mtx(EV3RT_CONSOLE_LOG_MTX) != E_OK) {
