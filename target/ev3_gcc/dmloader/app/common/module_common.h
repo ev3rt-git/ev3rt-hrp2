@@ -7,3 +7,4 @@ typedef struct {
 #define TSFN_CRE_TSK (1)
 #define TSFN_CRE_SEM (2)
 #define TSFN_CRE_FLG (3)
+#define TSFN_CRE_DTQ (4)

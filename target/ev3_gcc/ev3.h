@@ -106,6 +106,7 @@
 #define TMAX_APP_TSK_NUM     (32)          //!< Maximum number of tasks in a loadable application module
 #define TMAX_APP_SEM_NUM     (16)          //!< Maximum number of semaphores in a loadable application module
 #define TMAX_APP_FLG_NUM     (16)          //!< Maximum number of event flags in a loadable application module
+#define TMAX_APP_DTQ_NUM     (16)          //!< Maximum number of data queues in a loadable application module
 #define TMAX_APP_TEXT_SIZE   (1024 * 1024) //!< Maximum size of the text section in a loadable application module
 #define TMAX_APP_DATA_SIZE   (1024 * 1024) //!< Maximum size of the data section in a loadable application module
 #define TMAX_APP_BINARY_SIZE (1024 * 1024) //!< Maximum size of a loadable application module's binary file

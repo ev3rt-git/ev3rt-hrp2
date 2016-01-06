@@ -8,7 +8,7 @@ invalidapi,AID_SEM,.nosem,,
 flg,CRE_FLG,#flgid { .flgatr .iflgptn },,
 invalidapi,SAC_FLG,%flgid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 invalidapi,AID_FLG,.nosem,,
-invalidapi,CRE_DTQ,#dtqid { .dtqatr .dtqcnt &dtqmb },,
+dtq,CRE_DTQ,#dtqid { .dtqatr .dtqcnt &dtqmb },,
 invalidapi,SAC_DTQ,%dtqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 invalidapi,AID_DTQ,.nodtq,,
 invalidapi,CRE_PDQ,#pdqid { .pdqatr .pdqcnt +maxdpri &pdqmb },,
