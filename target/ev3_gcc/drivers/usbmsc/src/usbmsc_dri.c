@@ -36,10 +36,12 @@ void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ul
 #endif
 			connected = true;
 			iset_flg(USBMSC_EVT_FLG, USBMSC_EVT_CONNECT);
+#if defined(BUILD_LOADER)
 			if (*ev3rt_usb_auto_terminate_app) {
 				application_terminate_request();
 				ev3rt_console_set_visibility(true);
 			}
+#endif
 		}
 		break;
 
