@@ -16,6 +16,7 @@
  *  システム割込み番号
  */
 #define T64P0_TINT12 21
+#define T64P1_TINT12 23
 #define UART0_INT    25
 #define UART1_INT    53
 #define UART2_INT    61

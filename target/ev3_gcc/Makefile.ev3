@@ -29,6 +29,7 @@ include $(TARGETDIR)/drivers/lcd/Makefile
 include $(TARGETDIR)/drivers/newlib/Makefile
 include $(TARGETDIR)/drivers/sensor/analog/Makefile
 include $(TARGETDIR)/drivers/sensor/uart/Makefile
+include $(TARGETDIR)/drivers/sensor/i2c/Makefile
 include $(TARGETDIR)/drivers/soc/Makefile
 include $(TARGETDIR)/drivers/sound/Makefile
 include $(TARGETDIR)/drivers/motor/Makefile

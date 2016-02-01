@@ -61,6 +61,17 @@ typedef struct {
 } analog_data_t;
 
 /**
+ * Definitions for I2C sensor.
+ */
+
+typedef struct {
+	volatile uint8_t  *raw;    //!< Raw value from I2C sensor
+	volatile int8_t   *status; //!< Status of I2C sensor
+} i2c_data_t;
+
+#define I2C_TRANS_IDLE (0)
+
+/**
  * Definitions of motor.
  */
 
@@ -75,6 +86,7 @@ typedef struct {
 typedef struct {
 	uart_data_t     *uart_sensors;   //!< Pointer of an array with type uart_data_t[TNUM_INPUT_PORT]
 	analog_data_t   *analog_sensors; //!< Pointer of an array with type analog_data_t[TNUM_INPUT_PORT]
+	i2c_data_t      *i2c_sensors; //!< Pointer of an array with type i2c_data_t[TNUM_INPUT_PORT]
 	motor_data_t    *motor_data;     //!< Pointer of an array with type motor_data_t[TNUM_OUTPUT_PORT]
 	uint8_t         *motor_ready;    //!< Pointer of a bitmap with type uint8_t
 	volatile bool_t *button_pressed; //!< Pointer of an array with type bool_t[TNUM_BRICK_BUTTON]
@@ -165,6 +177,7 @@ extern ER __ev3_stp_cyc(ID ev3cycid);
 #define TFN_EV3_ACRE_CYC        (27)
 #define TFN_EV3_STA_CYC         (28)
 #define TFN_EV3_STP_CYC         (29)
+#define TFN_START_I2C_TRANS     (41)
 
 /**
  * Extended service call wrappers which can be used to implement APIs
@@ -206,6 +219,11 @@ static inline ER_ID _ev3_stp_cyc(ID ev3cycid) {
 	return ercd;
 }
 
+static inline ER_ID start_i2c_transaction(int port, uint_t addr, void *writebuf, uint_t writelen, uint_t readlen) {
+	ER_UINT ercd = cal_svc(TFN_START_I2C_TRANS, (intptr_t)port, (intptr_t)addr, (intptr_t)writebuf, (intptr_t)writelen, (intptr_t)readlen);
+	assert(ercd != E_NOMEM);
+	return ercd;
+}
 
 /**
  * Extended service call stubs
@@ -216,6 +234,7 @@ extern ER_UINT extsvc_brick_misc_command(intptr_t misccmd, intptr_t exinf, intpt
 extern ER_UINT extsvc__ev3_acre_cyc(intptr_t pk_ccyc, intptr_t par2, intptr_t par3, intptr_t par4, intptr_t par5, ID cdmid);
 extern ER_UINT extsvc__ev3_sta_cyc(intptr_t ev3cycid, intptr_t par2, intptr_t par3, intptr_t par4, intptr_t par5, ID cdmid);
 extern ER_UINT extsvc__ev3_stp_cyc(intptr_t ev3cycid, intptr_t par2, intptr_t par3, intptr_t par4, intptr_t par5, ID cdmid);
+extern ER_UINT extsvc_start_i2c_transaction(intptr_t port, intptr_t addr, intptr_t writebuf, intptr_t writelen, intptr_t readlen, ID cdmid);
 
 #if 0 // Legacy code
 

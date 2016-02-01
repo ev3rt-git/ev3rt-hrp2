@@ -14,6 +14,7 @@ const char   *ev3rt_bluetooth_local_name;
 const char   *ev3rt_bluetooth_pin_code;
 const bool_t *ev3rt_sensor_port_1_disabled;
 const bool_t *ev3rt_usb_auto_terminate_app;
+int           DEBUG_UART;
 
 void ev3rt_load_configuration() {
 	/**
@@ -34,6 +35,7 @@ void ev3rt_load_configuration() {
 
 	static bool_t disable_port_1;
 	disable_port_1 = ini_getbool("Sensors", "DisablePort1", false, CFG_INI_FILE);
+    DEBUG_UART = disable_port_1 ? 0 : 4;
 	ini_putl("Sensors", "DisablePort1", disable_port_1, CFG_INI_FILE);
 	ev3rt_sensor_port_1_disabled = &disable_port_1;
 

@@ -20,6 +20,8 @@ extern const char   *ev3rt_bluetooth_pin_code;     //!< Pin code for authenticat
 extern const bool_t *ev3rt_sensor_port_1_disabled; //!< True: use port 1 as a serial port, False: use port 1 as a normal sensor port
 extern const bool_t *ev3rt_usb_auto_terminate_app; //!< True: Terminate application automatically if USB is connected
 
+extern int           DEBUG_UART;                   //!< UART used for debug in Linux drivers (0 = port1, 1 = port2, ... 4 = none)
+
 /**
  * Tasks
  */

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#define PIL_VERSION (3U)
+#define PIL_VERSION (4U)
 
 #include "driver_interface_lcd.h"
 #include "driver_interface_brick.h"

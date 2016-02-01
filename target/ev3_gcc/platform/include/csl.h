@@ -19,6 +19,7 @@
 #include "driver_interface_filesys.h"
 #include "newlib_dri.h"
 #include "uart_dri.h"
+#include "i2c_dri.h"
 #include "sound_dri.h"
 #include "bluetooth_dri.h"
 #include "usbmsc_dri.h"
