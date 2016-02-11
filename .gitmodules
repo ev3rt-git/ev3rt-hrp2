@@ -1,0 +1,3 @@
+[submodule "modules/btstack"]
+	path = modules/btstack
+	url = https://github.com/ev3rt-git/btstack.git

@@ -12,11 +12,6 @@
 #include "kernel_cfg.h"
 #include "driver_common.h"
 #include "string.h"
-#include "btstack/btstack.h"
-#include "../btstack/src/btstack_memory.h"
-#include "../btstack/src/bt_control_cc256x.h"
-#include "../btstack/src/hci.h"
-#include "../btstack/src/remote_device_db.h"
 #include "platform.h"
 
 //#define DEBUG
@@ -81,39 +76,6 @@ void initialize_bluetooth_dri(intptr_t unused) {
 	driver.init_func = initialize;
 	driver.softreset_func = NULL;
 	SVC_PERROR(platform_register_driver(&driver));
-}
-
-void bluetooth_task(intptr_t unused) {
-#ifdef DEBUG
-	syslog(LOG_DEBUG, "[bluetooth] Start main task.");
-#endif
-
-    run_loop_init(RUN_LOOP_EMBEDDED);
-
-    // Initialize HCI
-    bt_control_t             *control   = bt_control_cc256x_instance();
-	hci_transport_t          *transport = hci_transport_h4_dma_instance();
-	hci_uart_config_t        *config    = hci_uart_config_cc256x_instance();
-	const remote_device_db_t *db        = &remote_device_db_memory;
-	hci_init(transport, config, control, db);
-
-    // Initialize SPP (Serial Port Profile)
-    bluetooth_spp_initialize();
-
-	// Power on
-	bt_control_cc256x_enable_ehcill(false);
-	hci_power_control(HCI_POWER_ON);
-
-    run_loop_execute();
-#if 0 // Code for debugging
-        while(1) {
-//        	bluetooth_uart_isr();
-        	embedded_execute_once();
-//        			if(rx_size > 0 && (UART2.IIR_FCR & 0x4)) // TODO: dirty hack
-//        				AINTC.SISR = UART2_INT;
-        	tslp_tsk(1); // TODO: Use interrupt instead of sleeping. -- ertl-liyixiao
-        }
-#endif
 }
 
 void hal_uart_dma_init() {
@@ -281,3 +243,38 @@ void bluetooth_qos_task(intptr_t unused) {
 //		syslog(LOG_ERROR, "rx_size: %d", rx_size);
 	}
 }
+
+/**
+ * BTstack interface implementation
+ */
+
+#include "btstack-interface.h"
+#include "syssvc/serial.h"
+
+const int btstack_rfcomm_mtu = BT_SND_BUF_SIZE;
+
+inline uint32_t btstack_get_time() {
+    SYSTIM systim;
+    get_tim(&systim);
+    return systim;
+}
+
+inline void btstack_runloop_sleep(uint32_t time) {
+    tslp_tsk(time);
+}
+
+inline void rfcomm_channel_open_callback() {
+	/**
+	 * Open Bluetooth SIO port
+	 */
+    SVC_PERROR(serial_opn_por(SIO_PORT_BT));
+    SVC_PERROR(serial_ctl_por(SIO_PORT_BT, (IOCTL_NULL)));
+}
+
+inline void rfcomm_channel_close_callback() {
+	/**
+	 * Close Bluetooth SIO port
+	 */
+	SVC_PERROR(serial_cls_por(SIO_PORT_BT));
+}
+
