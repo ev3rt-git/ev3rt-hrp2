@@ -11,10 +11,10 @@ invalidapi,AID_FLG,.nosem,,
 dtq,CRE_DTQ,#dtqid { .dtqatr .dtqcnt &dtqmb },,
 invalidapi,SAC_DTQ,%dtqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 invalidapi,AID_DTQ,.nodtq,,
-invalidapi,CRE_PDQ,#pdqid { .pdqatr .pdqcnt +maxdpri &pdqmb },,
+pdq,CRE_PDQ,#pdqid { .pdqatr .pdqcnt +maxdpri &pdqmb },,
 invalidapi,SAC_PDQ,%pdqid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 invalidapi,AID_PDQ,.nopdq,,
-invalidapi,CRE_MTX,#mtxid { .mtxatr +ceilpri? },,
+mtx,CRE_MTX,#mtxid { .mtxatr +ceilpri? },,
 invalidapi,SAC_MTX,%mtxid { .acptn1 .acptn2 .acptn3 .acptn4 },0,1
 invalidapi,AID_MTX,.nomtx,,
 invalidapi,CRE_MPF,#mpfid { .mpfatr .blkcnt .blksz &mpf &mpfmb },,

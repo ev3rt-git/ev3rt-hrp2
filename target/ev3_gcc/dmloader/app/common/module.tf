@@ -70,6 +70,8 @@ $ $TRACE(DEFAULT.ACPTN[1])$
 $INCLUDE"dmloader_semaphore.tf"$
 $INCLUDE"dmloader_eventflag.tf"$
 $INCLUDE"dmloader_dataqueue.tf"$
+$INCLUDE"dmloader_pridataqueue.tf"$
+$INCLUDE"dmloader_mutex.tf"$
 
 $ ===========================
 $ Generate '_module_cfg_tab'

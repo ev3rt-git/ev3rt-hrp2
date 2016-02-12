@@ -10,14 +10,38 @@ $     MODCFGTAB (updated)
 $ ====================
 
 $
-$ Check protection domains
+$ Check static API
 $
 $FOREACH id DTQ.ID_LIST$
+
+$   // Check protection domains
 $IF !EQ(DTQ.DOMAIN[id], "") && !EQ(DTQ.DOMAIN[id], "TDOM_APP")$
     $ERROR DTQ.TEXT_LINE[id]$E_NOSPT: 
         $FORMAT(_("%1% `%2%\' in %3% must belong to TDOM_NONE or TDOM_APP in dynamic loading mode"), "data queue", id, DTQ.APINAME[id])$
     $END$   
 $END$
+
+$	// dtqatrが（［TA_TPRI］）でない場合（E_RSATR）
+$IF (DTQ.DTQATR[id] & ~TA_TPRI) != 0$
+	$ERROR DTQ.TEXT_LINE[id]$E_RSATR:
+        $FORMAT(_("illegal %1% `%2%\' of `%3%\' in %4%"), "dtqatr", DTQ.DTQATR[id], id, "CRE_DTQ")$
+    $END$
+$END$
+
+$	// dtqcntが負の場合（E_PAR）
+$IF DTQ.DTQCNT[id] < 0$
+	$ERROR DTQ.TEXT_LINE[id]$E_PAR:
+        $FORMAT(_("illegal %1% `%2%\' of `%3%\' in %4%"), "dtqcnt", DTQ.DTQCNT[id], id, "CRE_DTQ")$
+    $END$
+$END$
+
+$	// dtqmbがNULLでない場合（E_NOSPT）
+$IF !EQ(DTQ.DTQMB[id], "NULL")$
+	$ERROR DTQ.TEXT_LINE[id]$E_NOSPT:
+        $FORMAT(_("illegal %1% `%2%\' of `%3%\' in %4%"), "dtqmb", DTQ.DTQMB[id], id, "CRE_DTQ")$
+    $END$
+$END$
+
 $END$
 
 $
