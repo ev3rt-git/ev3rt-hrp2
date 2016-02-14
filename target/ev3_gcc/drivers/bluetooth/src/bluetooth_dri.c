@@ -278,3 +278,14 @@ inline void rfcomm_channel_close_callback() {
 	SVC_PERROR(serial_cls_por(SIO_PORT_BT));
 }
 
+#define LINK_KEY_FILE ("/ev3rt/etc/bt_link_keys")
+
+void btstack_db_put(const char *addr, const char *link_key) {
+	ini_puts("LinkKey", addr, link_key, LINK_KEY_FILE);
+}
+
+int btstack_db_get(const char *addr, char *link_key) {
+	ini_gets("LinkKey", addr, "", link_key, BTSTACK_DB_VAL_SIZE, LINK_KEY_FILE);
+	return link_key[0] != '\0';
+}
+

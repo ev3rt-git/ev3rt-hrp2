@@ -8,7 +8,6 @@
 #include "minIni.h"
 
 #define CFG_INI_FILE  ("/ev3rt/etc/rc.conf.ini")
-#define LINK_KEY_FILE ("/ev3rt/etc/bt_link_keys")
 
 const char   *ev3rt_bluetooth_local_name;
 const char   *ev3rt_bluetooth_pin_code;
@@ -45,11 +44,3 @@ void ev3rt_load_configuration() {
 	ev3rt_usb_auto_terminate_app = &auto_term_app;
 }
 
-void ev3rt_put_bluetooth_link_key(const char *addr, const char *link_key) {
-	ini_puts("LinkKey", addr, link_key, LINK_KEY_FILE);
-}
-
-bool_t ev3rt_get_bluetooth_link_key(const char *addr, char *link_key) {
-	ini_gets("LinkKey", addr, "", link_key, 100, LINK_KEY_FILE);
-	return link_key[0] != '\0';
-}
