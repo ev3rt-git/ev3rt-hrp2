@@ -522,7 +522,7 @@ TYPES     TypeDefaultUart[] =
 //static    int  ModuleInit(void);
 //static    void ModuleExit(void);
 
-//#include  <linux/kernel.h>
+#include  <linux/kernel.h>
 //#include  <linux/fs.h>
 //
 //#include  <linux/sched.h>
@@ -1887,6 +1887,7 @@ char      UartStateText[UART_STATES][50] =
   "EXIT"
 };
 
+typedef ULONG __attribute__((__may_alias__)) ULONG_MAY_ALIAS;
 
 typedef struct
 {
@@ -2006,8 +2007,8 @@ static void UartPortDisable(UBYTE Port)
 #endif
 
   }
-  if(Port != 0) // TODO: Hacks -- ertl-liyixiao
-  PUARTHigh(Port,INPUT_UART_BUFFER);
+//  if(Port != 0) // TODO: Hacks -- ertl-liyixiao
+//  PUARTHigh(Port,INPUT_UART_BUFFER);
 }
 
 
@@ -2793,13 +2794,13 @@ static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].RawMin)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].RawMin)  =  TmpL;
                               TmpL  =  0;
                               for (Tmp = 0;(Tmp < (UartPort[Port].InLength - 4)) && (Tmp < 4);Tmp++)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp + 4] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].RawMax)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].RawMax)  =  TmpL;
 
                               if (TypeData[Port][Mode].Mode == GET_MODE(UartPort[Port].Cmd))
                               {
@@ -2840,13 +2841,13 @@ static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].PctMin)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].PctMin)  =  TmpL;
                               TmpL  =  0;
                               for (Tmp = 0;(Tmp < (UartPort[Port].InLength - 4)) && (Tmp < 4);Tmp++)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp + 4] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].PctMax)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].PctMax)  =  TmpL;
 
                               if (TypeData[Port][Mode].Mode == GET_MODE(UartPort[Port].Cmd))
                               { // Mode valid
@@ -2888,13 +2889,13 @@ static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].SiMin)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].SiMin)  =  TmpL;
                               TmpL  =  0;
                               for (Tmp = 0;(Tmp < (UartPort[Port].InLength - 4)) && (Tmp < 4);Tmp++)
                               {
                                 TmpL |=  (ULONG)UartPort[Port].InBuffer[Tmp + 4] << (8 * Tmp);
                               }
-                              *((ULONG*)&TypeData[Port][Mode].SiMax)  =  TmpL;
+                              *((ULONG_MAY_ALIAS*)&TypeData[Port][Mode].SiMax)  =  TmpL;
 
                               if (TypeData[Port][Mode].Mode == GET_MODE(UartPort[Port].Cmd))
                               { // Mode valid

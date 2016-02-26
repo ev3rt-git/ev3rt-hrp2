@@ -18,7 +18,7 @@
 #include "target_syssvc.h"
 #include "target_serial.h"
 #include "kernel_cfg.h"
-#include "platform.h"
+#include "csl.h"
 
 #define TMAX_DRI_NUM (16)
 static ev3_driver_t drivers[TMAX_DRI_NUM];
@@ -40,6 +40,7 @@ void ev3_main_task(intptr_t exinf) {
     /**
      * Load configurations
      */
+    extern void ev3rt_load_configuration(); // TODO: extern from ev3rt_config.c
     ev3rt_load_configuration();
 
     if ((*ev3rt_sensor_port_1_disabled)) {
@@ -90,7 +91,7 @@ void ev3_main_task(intptr_t exinf) {
 	syslog(LOG_NOTICE, "");
 	syslog(LOG_NOTICE, "");
 	syslog(LOG_NOTICE, "   _____   ______ ___  ______");
-	syslog(LOG_NOTICE, "  / __/ | / /_  // _ \/_  __/");
+	syslog(LOG_NOTICE, "  / __/ | / /_  // _ \\/_  __/");
 	syslog(LOG_NOTICE, " / _/ | |/ //_ </ , _/ / /");
 	syslog(LOG_NOTICE, "/___/ |___/____/_/|_| /_/");
 	syslog(LOG_NOTICE, "=============================");

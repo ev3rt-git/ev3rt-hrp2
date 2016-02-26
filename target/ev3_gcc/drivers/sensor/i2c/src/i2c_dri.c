@@ -14,8 +14,6 @@
 #define InitGpio InitGpio_I2C
 typedef uint8_t __u8;
 
-#define LOG_EMERG LOG_NOTICE
-
 //#include  "driver_common.h"
 
 /**
@@ -25,15 +23,98 @@ typedef uint8_t __u8;
 
 INPIN IicPortPin[NO_OF_IIC_PORTS][IIC_PORT_PINS];
 
+static i2c_data_t driver_data_i2c_sensor[TNUM_INPUT_PORT];
+
+void setup_i2c_port(int port) {
+	SetGpio(IicPortPin[port][IIC_PORT_BUFFER_CTRL].Pin);
+	SetGpio(IicPortPin[port][IIC_PORT_DATA].Pin);
+	IicPortEnable(port);
+}
+
+static void initialize(intptr_t unused) {
+	/**
+	 * Reset 64-bit GP timer
+	 */
+    TIMERP1.TGCR  = 0x0;
+	AINTC.SICR = INTNO_I2C_TIMER;
+    TIMERP1.TIM12 = 0x0;
+    TIMERP1.TIM34 = 0x0;
+    TIMERP1.PRD12 = 0x0;
+    TIMERP1.PRD34 = 0x0;
+    TIMERP1.REL12 = 0x0;
+    TIMERP1.REL34 = 0x0;
+//    TIMERP1.INTCTLSTAT = 0x30003;
+	TIMERP1.TGCR  = 0x3;
+    //TIMERP1.TCR   = 0x0;
+    //TIMERP1.TGCR  = 0x3;
+
+	ModuleInit();
+
+	for(int i = 0; i < TNUM_INPUT_PORT; ++i) {
+	    driver_data_i2c_sensor[i].raw = IicCtrl.data_package[i].data;
+	    driver_data_i2c_sensor[i].status = &(IicCtrl.data_package[i].transfer_state);
+	}
+	global_brick_info.i2c_sensors = driver_data_i2c_sensor;
+
+#if defined(DEBUG_I2C_SENSOR) || 1
+    syslog(LOG_NOTICE, "i2c_dri initialized.");
+#if 0
+    SetGpio(GP8_11);
+    SetGpio(UART1_TXD);
+    SetGpio(UART1_RXD);
+    SetGpio(GP0_2);
+    SetGpio(GP0_15);
+#endif
+#endif
+}
+
+void initialize_i2c_dri(intptr_t unused) {
+	ev3_driver_t driver;
+	driver.init_func = initialize;
+	driver.softreset_func = NULL;
+	SVC_PERROR(platform_register_driver(&driver));
+}
+
+ER _start_i2c_transaction(int port, uint_t addr, const uint8_t *writebuf, uint_t writelen, uint_t readlen, ID cdmid) {
+	if(!PROBE_MEM_READ_SIZE(writebuf, writelen)) return E_MACV;
+
+	ER ercd;
+
+	CHECK_SENSOR_PORT(port);
+	CHECK_PAR(writelen <= MAX_DEVICE_DATALENGTH);
+	CHECK_PAR(readlen <= MAX_DEVICE_DATALENGTH);
+
+	struct IIC_data_package *datapkg = &(IicCtrl.data_package[port]);
+
+	CHECK_OBJ(datapkg->transfer_state == TRANSFER_IDLE);
+
+	datapkg->addr =  addr;
+	memcpy(datapkg->data, writebuf, writelen);
+	datapkg->write_length     =  writelen;
+	datapkg->read_length      =  readlen;
+	datapkg->port             =  port;
+	datapkg->nacked           =  0;
+	datapkg->clock_state      =  1;
+	datapkg->transfer_state   =  TRANSFER_START;
+
+	iic_fiq_start_transfer(50,1); // TODO: check this, use cyclic instead
+
+	ercd = E_OK;
+
+error_exit:
+	return(ercd);
+}
+
+#if 0 // Legacy code
+
+
 static DEVCON devcon = {
     { CONN_NONE, CONN_NONE, CONN_NONE, CONN_NONE },
     { TYPE_UNKNOWN, TYPE_UNKNOWN, TYPE_UNKNOWN, TYPE_UNKNOWN },
     { MODE_NONE_UART_SENSOR, MODE_NONE_UART_SENSOR, MODE_NONE_UART_SENSOR, MODE_NONE_UART_SENSOR }
 };
 
-static i2c_data_t driver_data_i2c_sensor[TNUM_INPUT_PORT];
-
-#if defined(DEBUG_I2C_SENSOR) || 1
+#if defined(DEBUG_I2C_SENSOR)
 
 static void debug_i2c_cyc(intptr_t unused) {
 	static IICDAT IicDat;
@@ -121,41 +202,6 @@ static void debug_i2c_sensor() {
 
 #endif
 
-static void initialize(intptr_t unused) {
-	/**
-	 * Reset 64-bit GP timer
-	 */
-    TIMERP1.TGCR  = 0x0;
-	AINTC.SICR = INTNO_I2C_TIMER;
-    TIMERP1.TIM12 = 0x0;
-    TIMERP1.TIM34 = 0x0;
-    TIMERP1.PRD12 = 0x0;
-    TIMERP1.PRD34 = 0x0;
-    TIMERP1.REL12 = 0x0;
-    TIMERP1.REL34 = 0x0;
-//    TIMERP1.INTCTLSTAT = 0x30003;
-	TIMERP1.TGCR  = 0x3;
-    //TIMERP1.TCR   = 0x0;
-    //TIMERP1.TGCR  = 0x3;
-
-	ModuleInit();
-
-	for(int i = 0; i < TNUM_INPUT_PORT; ++i) {
-	    driver_data_i2c_sensor[i].raw = IicCtrl.data_package[i].data;
-	    driver_data_i2c_sensor[i].status = &(IicCtrl.data_package[i].transfer_state);
-	}
-	global_brick_info.i2c_sensors = driver_data_i2c_sensor;
-
-#if defined(DEBUG_I2C_SENSOR) || 1
-    syslog(LOG_EMERG, "i2c_dri initialized.");
-    SetGpio(GP8_11);
-    SetGpio(UART1_TXD);
-    SetGpio(UART1_RXD);
-    SetGpio(GP0_2);
-    SetGpio(GP0_15);
-#endif
-}
-
 static void softreset(intptr_t unused) {
     SetGpio(GP8_14);
     //SetGpio(GP8_3);
@@ -163,39 +209,4 @@ static void softreset(intptr_t unused) {
     debug_i2c_sensor();
 }
 
-void initialize_i2c_dri(intptr_t unused) {
-	ev3_driver_t driver;
-	driver.init_func = initialize;
-	driver.softreset_func = softreset;
-	SVC_PERROR(platform_register_driver(&driver));
-}
-
-ER _start_i2c_transaction(int port, uint_t addr, uint8_t *writebuf, uint_t writelen, uint_t readlen, ID cdmid) {
-	if(!PROBE_MEM_READ_SIZE(writebuf, writelen)) return E_MACV;
-
-	ER ercd;
-
-	CHECK_SENSOR_PORT(port);
-	CHECK_PAR(writelen <= MAX_DEVICE_DATALENGTH);
-	CHECK_PAR(readlen <= MAX_DEVICE_DATALENGTH);
-
-	struct IIC_data_package *datapkg = &(IicCtrl.data_package[port]);
-
-	CHECK_OBJ(datapkg->transfer_state == TRANSFER_IDLE);
-
-	datapkg->addr =  addr;
-	memcpy(datapkg->data, writebuf, writelen);
-	datapkg->write_length     =  writelen;
-	datapkg->read_length      =  readlen;
-	datapkg->port             =  port;
-	datapkg->nacked           =  0;
-	datapkg->clock_state      =  1;
-	datapkg->transfer_state   =  TRANSFER_START;
-
-	iic_fiq_start_transfer(50,1); // TODO: check this, use cyclic instead
-
-	ercd = E_OK;
-
-error_exit:
-	return(ercd);
-}
+#endif

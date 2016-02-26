@@ -5,6 +5,7 @@
 #include "target_syssvc.h"
 #include "am1808.h"
 #include "tlsf.h"
+#include <string.h>
 
 #if defined(BUILD_EV3_PLATFORM)
 static bool_t tlsf_initialized = false;
@@ -70,7 +71,6 @@ target_exit(void) {
  */
 void initialize_sections(void) {
     uint_t              i;
-    uint8_t             *src, *dst;
     const DATASECINIB   *p_datasecinib;
     const BSSSECINIB    *p_bsssecinib;
 

@@ -1540,7 +1540,7 @@ void      TestAndFloatSyncedMotors(UBYTE MotorBitField, UBYTE SyncCmd)
 static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
 {
   UBYTE No;
-  UBYTE Test;
+  UBYTE Test __attribute__((__unused__));
 
   static SLONG volatile TmpTacho;
   static SLONG volatile Tmp;

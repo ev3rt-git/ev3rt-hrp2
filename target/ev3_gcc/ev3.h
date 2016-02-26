@@ -83,11 +83,6 @@
 #define APP_HEAP_SIZE    (1024 * 1024) //!< Heap size for dynamic memory allocation in TDOM_APP
 
 /**
- * Whether use UART1 (i.e. Port1) as a sensor port
- */
-#define ENABLE_UART1_SENSOR (false)
-
-/**
  * Default SIO Port for syslog etc.
  */
 #define SIO_PORT_DEFAULT SIO_PORT_LCD
@@ -109,6 +104,8 @@
 #define TMAX_APP_SEM_NUM     (16)          //!< Maximum number of semaphores in a loadable application module
 #define TMAX_APP_FLG_NUM     (16)          //!< Maximum number of event flags in a loadable application module
 #define TMAX_APP_DTQ_NUM     (16)          //!< Maximum number of data queues in a loadable application module
+#define TMAX_APP_PDQ_NUM     (16)          //!< Maximum number of priority data queues in a loadable application module
+#define TMAX_APP_MTX_NUM     (16)          //!< Maximum number of mutexes in a loadable application module
 #define TMAX_APP_TEXT_SIZE   (1024 * 1024) //!< Maximum size of the text section in a loadable application module
 #define TMAX_APP_DATA_SIZE   (1024 * 1024) //!< Maximum size of the data section in a loadable application module
 #define TMAX_APP_BINARY_SIZE (1024 * 1024) //!< Maximum size of a loadable application module's binary file

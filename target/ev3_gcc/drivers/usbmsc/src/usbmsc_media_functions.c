@@ -18,7 +18,7 @@
 
 static void *usbmsc_open_mmcsd(unsigned int ulDrive) {
 	assert(ulDrive == 0);
-	return 0xdeadbeef; // Return a dummy pointer since NULL means failure.
+	return (void*)0xdeadbeef; // Return a dummy pointer since NULL means failure.
 }
 
 static void usbmsc_close_mmcsd(void * pvDrive) {

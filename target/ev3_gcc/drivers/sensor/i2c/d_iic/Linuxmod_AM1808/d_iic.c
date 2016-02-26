@@ -87,7 +87,10 @@
 #define   DEVICE1_NAME                  IIC_DEVICE
 
 static    int  ModuleInit(void);
+
+#if 0 // unused in EV3RT -- ertl-liyixiao
 static    void ModuleExit(void);
+#endif
 
 #define   __USE_POSIX
 
@@ -475,6 +478,7 @@ extern void iic_fiq_start_transfer(unsigned int time, bool fiq_nirq);
 
 #endif
 
+#if 0 // unused in EV3RT -- ertl-liyixiao
 
 static void IicPortDisable(UBYTE Port)
 {
@@ -491,6 +495,7 @@ static void IicPortDisable(UBYTE Port)
 #endif
 }
 
+#endif
 
 static void IicPortEnable(UBYTE Port)
 {
@@ -512,6 +517,7 @@ static void IicPortEnable(UBYTE Port)
 #endif
 }
 
+#if 0 // unused in EV3RT -- ertl-liyixiao
 
 static UBYTE IicPortBusy(UBYTE Port)
 {
@@ -622,6 +628,8 @@ static RESULT IicPortReceive(UBYTE Port,UBYTE *pTmpBuffer)
   return (Result);
 }
 
+#endif
+
 
 // DEVICE1 ********************************************************************
 
@@ -687,11 +695,11 @@ DATA8     IicPortType[INPUTS];
 IICSTR    IicStrings[INPUTS];
 
 
+#if 0 // state machine is unused. -- ertl-liyixiao
 #define   IIC_TIMER_RESOLUTION            20 // [100u]
 static    struct hrtimer Device1Timer;
 static    ktime_t        Device1Time;
 
-#if 0 // state machine is unused. -- ertl-liyixiao
 static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
 {
   UBYTE   Port;
@@ -1226,6 +1234,8 @@ static enum hrtimer_restart Device1TimerInterrupt1(struct hrtimer *pTimer)
 }
 #endif
 
+#if 0 // unused in EV3RT -- ertl-liyixiao
+
 static int Device1Ioctl(struct inode *pNode, struct file *File, unsigned int Request, unsigned long Pointer)
 {
   DEVCON  *pDevCon;
@@ -1450,8 +1460,6 @@ static int Device1Ioctl(struct inode *pNode, struct file *File, unsigned int Req
   return (0);
 }
 
-#if 0 // unused in EV3RT -- ertl-liyixiao
-
 static ssize_t Device1Write(struct file *File,const char *Buffer,size_t Count,loff_t *Data)
 {
   int     Lng     = 0;
@@ -1556,8 +1564,10 @@ static    struct miscdevice Device1 =
 static int Device1Init(void)
 {
   int     Result = -1;
+#if 0 // unused in EV3RT -- ertl-liyixiao
   UWORD   *pTmp;
   int     i;
+#endif
 #ifndef   DISABLE_FIQ_IIC
   UBYTE   Port;
 #endif

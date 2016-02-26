@@ -693,7 +693,7 @@ static    int  ModuleInit(void);
 
 //#define   __USE_POSIX
 //
-//#include  <linux/kernel.h>
+#include  <linux/kernel.h>
 //#include  <linux/fs.h>
 //
 //#include  <linux/sched.h>

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <t_syslog.h>
 #include "gui.h"
+#include "csl.h"
 
 static bool_t load_success;
 

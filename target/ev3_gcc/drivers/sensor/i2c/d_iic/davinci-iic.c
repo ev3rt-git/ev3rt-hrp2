@@ -3,11 +3,12 @@
 // Placeholder for the two symbolic include files - start
 #include "mach/da8xx.h"
 
+#if 0 // unused in EV3RT -- ertl-liyixiao
+
 #define FINAL 1
 #define HARDWARE FINAL
 #define INPUTS 4
 
-#if 0 // unused in EV3RT -- ertl-liyixiao
 enum
   {
     GP0_0,GP0_1,GP0_2,GP0_3,GP0_4,GP0_5,GP0_6,GP0_7,GP0_8,GP0_9,GP0_10,GP0_11,GP0_12,GP0_13,GP0_14,GP0_15,

@@ -4,8 +4,8 @@
 #include "platform_interface_layer.h"
 #include "kernel_cfg.h"
 #include "driver_common.h"
-#include "platform.h"
 #include "app.h"
+#include "csl.h"
 
 //static bool_t app_loaded = false;
 

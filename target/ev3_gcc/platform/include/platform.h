@@ -11,6 +11,7 @@ extern ER platform_register_driver(const ev3_driver_t *p_driver);
 
 ER platform_soft_reset();
 bool_t platform_is_ready();
+void platform_pause_application();
 
 /**
  * EV3RT configurations

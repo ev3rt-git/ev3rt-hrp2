@@ -15,6 +15,7 @@
  * to enable the "string functions" fgets() and fputs().
  */
 //#include "ff.h"                   /* include tff.h for Tiny-FatFs */
+#include <string.h>
 #include "fatfs_dri.h"
 
 #define INI_FILETYPE    FIL
@@ -29,10 +30,11 @@
 #define ini_tell(file,pos)            (*(pos) = f_tell((file)))
 #define ini_seek(file,pos)            (f_lseek((file), *(pos)) == FR_OK)
 
+inline
 static int ini_rename(TCHAR *source, const TCHAR *dest)
 {
   /* Function f_rename() does not allow drive letters in the destination file */
-  char *drive = strchr(dest, ':');
+  const char *drive = strchr(dest, ':');
   drive = (drive == NULL) ? dest : drive + 1;
   return (f_rename(source, drive) == FR_OK);
 }

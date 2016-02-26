@@ -30,9 +30,6 @@ struct inode;
 /**
  * Constant definitions
  */
-#define KERN_ERR
-#define KERN_WARNING
-#define KERN_INFO
 #define __init
 #define __initdata
 #define __init_or_module
@@ -51,7 +48,7 @@ struct inode;
 #undef printf
 #define pr_warning(fmt, ...) syslog(LOG_WARNING, fmt, ##__VA_ARGS__)
 #define pr_info(fmt, ...)    syslog(LOG_INFO, fmt, ##__VA_ARGS__)
-#define printk(fmt, ...)     syslog(LOG_ALERT, fmt, ##__VA_ARGS__)
+//#define printk(fmt, ...)     syslog(LOG_ALERT, fmt, ##__VA_ARGS__)
 #define printf(fmt, ...)     syslog(LOG_ALERT, fmt, ##__VA_ARGS__)
 #define gpio_request(x, y)   (0)
 #define __raw_readl(addr)    (*(volatile uint32_t*)(addr))

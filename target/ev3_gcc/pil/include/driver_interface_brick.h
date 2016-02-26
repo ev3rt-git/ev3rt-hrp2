@@ -66,7 +66,7 @@ typedef struct {
 
 typedef struct {
 	volatile uint8_t  *raw;    //!< Raw value from I2C sensor
-	volatile int8_t   *status; //!< Status of I2C sensor
+	volatile uint8_t  *status; //!< Status of I2C sensor
 } i2c_data_t;
 
 #define I2C_TRANS_IDLE (0)
@@ -167,6 +167,8 @@ extern ER __ev3_sta_cyc(ID ev3cycid);
  * @retval E_OK
  */
 extern ER __ev3_stp_cyc(ID ev3cycid);
+
+extern ER _start_i2c_transaction(int port, uint_t addr, const uint8_t *writebuf, uint_t writelen, uint_t readlen, ID cdmid);
 
 /**
  * Function code for extended service calls

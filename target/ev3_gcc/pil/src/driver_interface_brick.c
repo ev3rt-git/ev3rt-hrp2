@@ -29,5 +29,5 @@ ER_UINT extsvc__ev3_stp_cyc(intptr_t ev3cycid, intptr_t par2, intptr_t par3, int
 }
 
 ER_UINT extsvc_start_i2c_transaction(intptr_t port, intptr_t addr, intptr_t writebuf, intptr_t writelen, intptr_t readlen, ID cdmid) {
-	return _start_i2c_transaction((int)port,(uint_t)addr, (uint8_t*)writebuf, (uint_t)writelen, (uint_t)readlen);
+	return _start_i2c_transaction((int)port,(uint_t)addr, (uint8_t*)writebuf, (uint_t)writelen, (uint_t)readlen, cdmid);
 }

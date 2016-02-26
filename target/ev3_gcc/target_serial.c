@@ -527,7 +527,7 @@ static intptr_t lcd_dis_cbr(intptr_t cbrtn) {
 }
 
 static intptr_t lcd_snd_chr(intptr_t c) {
-	ev3rt_console_log_putc(c);
+    lcd_console_send_character(c);
 	return true;
 }
 

@@ -114,12 +114,12 @@ static void log_view_refresh_ex(int32_t bottom_line) {
 	// Fill the log view with (CONSOLE_LOG_VIEW_LINES - 1) lines
 	for (int i = bottom_line; i < bottom_line + CONSOLE_LOG_VIEW_LINES - 1; ++i)
 		for (int j = 0; j < CONSOLE_LOG_VIEW_LINE_WIDTH; ++j)
-			log_view_putc(log_buffer[i + 1][j]);
+			log_view_putc(log_buffer[i][j]);
 
 	// Output bottom line
 	int columns = (bottom_line == log_current_line) ? log_current_column : CONSOLE_LOG_VIEW_LINE_WIDTH;
-	for (int j = 0; j < log_current_column; ++j)
-		log_view_putc(log_buffer[log_current_line + CONSOLE_LOG_VIEW_LINES][j]);
+	for (int j = 0; j < columns; ++j)
+		log_view_putc(log_buffer[bottom_line + CONSOLE_LOG_VIEW_LINES - 1][j]);
 }
 
 static void log_view_scroll(bool_t up) {
@@ -218,7 +218,7 @@ void ev3rt_console_set_visibility(bool_t visible) {
 #endif
 }
 
-void ev3rt_console_log_putc(char c) {
+void lcd_console_send_character(char c) {
 #if 0
 	ER ercd;
 
@@ -245,11 +245,6 @@ void ev3rt_console_log_putc(char c) {
         return;
     }
 #endif
-}
-
-void ev3rt_console_start_app() {
-	ev3rt_console_set_visibility(false);
-	platform_pause_application(false);
 }
 
 /**

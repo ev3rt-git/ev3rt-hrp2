@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-//#include <linux/kernel.h>
+#include <linux/kernel.h>
 //#include <linux/errno.h>
 //#include <linux/init.h>
 //#include <linux/slab.h>

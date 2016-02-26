@@ -205,8 +205,14 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	// TODO: implement this
-	assert(false);
+	switch(cmd) {
+	case CTRL_SYNC:
+		// do nothing since disk_write() is synchronized
+		break;
+	default:
+		// TODO: handle this
+		assert(false);
+	}
 	return RES_OK;
 }
 #endif

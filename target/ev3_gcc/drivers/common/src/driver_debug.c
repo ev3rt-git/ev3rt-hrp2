@@ -10,6 +10,7 @@
 #include "ev3.h"
 #include "driver_common.h"
 #include "driver_debug.h"
+#include <linux/kernel.h>
 
 #define BIT(x) (1<<(x))
 

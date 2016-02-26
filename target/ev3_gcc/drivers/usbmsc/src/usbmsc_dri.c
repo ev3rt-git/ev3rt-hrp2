@@ -14,6 +14,9 @@
 #include "usblib/usbdmsc.h"
 #include "usb_msc_structs.h"
 #include "csl.h"
+#if defined(BUILD_LOADER)
+#include "apploader.h"
+#endif
 
 // From 'usbmsc_media_functions.c'
 extern const tMSCDMedia usbmsc_media_functions_mmcsd;

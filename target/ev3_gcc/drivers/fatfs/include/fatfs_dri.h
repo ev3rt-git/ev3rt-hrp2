@@ -12,6 +12,14 @@
 extern void initialize_fatfs_dri();
 
 /**
+ * Synchronization functions
+ */
+ER try_acquire_mmcsd();
+void acquire_mmcsd();
+void release_mmcsd();
+void fatfs_set_enabled(bool_t enabled);
+
+/**
  * MMC/SD operations
  * It is caller's responsibility to perform read/write exclusively.
  */
