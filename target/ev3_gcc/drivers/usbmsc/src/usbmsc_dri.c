@@ -10,8 +10,8 @@
 #include "usbmsc_dri.h"
 
 #include "hw/hw_types.h"
-#include "usblib/usblib.h"
-#include "usblib/usbdmsc.h"
+#include "usblib.h"
+#include "usbdmsc.h"
 #include "usb_msc_structs.h"
 #include "csl.h"
 #if defined(BUILD_LOADER)
@@ -27,7 +27,7 @@ extern tDeviceInfo g_sMSCDeviceInfo;
 
 static bool_t connected = false;
 
-void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData) {
+unsigned int usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData) {
 #if defined(DEBUG_USBMSC) && 0
 		syslog(LOG_EMERG, "%s(ulEvent=%x) called", __FUNCTION__, ulEvent);
 #endif
@@ -70,6 +70,8 @@ void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ul
 		break;
 #endif
 	}
+
+    return 0;
 }
 
 void usbmsc_task(intptr_t unused) {

@@ -2,7 +2,7 @@
 #  Makefile for USB Mass Storage Class
 #
 
-REAL_PWD := $(dir $(lastword $(MAKEFILE_LIST)))
+#REAL_PWD := $(dir $(lastword $(MAKEFILE_LIST)))
 
 #
 # Note: Outputting too many debug log during
@@ -11,9 +11,11 @@ REAL_PWD := $(dir $(lastword $(MAKEFILE_LIST)))
 #
 COPTS += -DDMA_MODE
 
-LDFLAGS := $(LDFLAGS) -L$(REAL_PWD)/lib
-
-# Libusblib.a (release version) from AM1808_StarterWare_1_00_03_03
+#
+# Include usblib module
+#
+INCLUDES += -I$(SRCDIR)/modules/usblib/usblib/include
+LDFLAGS += -L$(SRCDIR)/modules/usblib/Release
 APPL_LIBS += -lusblib
 	
 APPL_COBJS += usbmsc_dri.o \
@@ -26,8 +28,8 @@ APPL_COBJS += usbmsc_dri.o \
 
 # Debug usblib
 #COPTS += -DDEBUG_USBMSC_USBLIB
-SYSSVC_DIR := $(SYSSVC_DIR) $(REAL_PWD)/debug
-APPL_COBJS += usbdmsc.o usbdenum.o
+#SYSSVC_DIR := $(SYSSVC_DIR) $(REAL_PWD)/debug
+#APPL_COBJS += usbdmsc.o usbdenum.o
 # For debugging usblib
 #	debug_usbdenum.o \
 #	

@@ -9,8 +9,8 @@
 #include "fatfs_dri.h"
 
 #include "hw/hw_types.h"
-#include "usblib/usblib.h"
-#include "usblib/usbdmsc.h"
+#include "usblib.h"
+#include "usbdmsc.h"
 
 /**
  * MMC/SD media functions

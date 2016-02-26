@@ -24,10 +24,10 @@
 
 #include "hw_types.h"
 #include "usb.h"
-#include "usblib/usblib.h"
-#include "usblib/usb-ids.h"
+#include "usblib.h"
+#include "usb-ids.h"
 //#include "usbdevice.h"
-#include "usblib/usbdmsc.h"
+#include "usbdmsc.h"
 #include "usb_msc_structs.h"
 //#include "usbdmscglue.h"
 #include "cppi41dma.h"
@@ -145,7 +145,7 @@ const unsigned char * const g_pStringDescriptors[] =
 tMSCInstance g_sMSCInstance;
 
 // From 'usbmsc_dri.c'
-void usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData);
+unsigned int usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData);
 
 tUSBDMSCDevice g_sMSCDevice =
 {
