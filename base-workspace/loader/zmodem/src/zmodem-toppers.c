@@ -1,5 +1,3 @@
-#define HAS_STDINT_H
-
 #include <kernel.h>
 #include <itron.h>
 #include <t_syslog.h>

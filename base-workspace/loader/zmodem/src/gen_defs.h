@@ -38,6 +38,8 @@
 #ifndef _GEN_DEFS_H
 #define _GEN_DEFS_H
 
+#define HAS_STDINT_H
+
 #include <errno.h>
 
 /* Resolve multi-named errno constants */

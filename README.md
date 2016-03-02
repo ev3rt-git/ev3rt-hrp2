@@ -29,4 +29,8 @@ Build Hello EV3 (standalone):
 cd ev3rt-sdk/workspace
 make img=helloev3
 ```
+# Build status
 
+Status               | Platform
+--------------       | ------ 
+[![Build Status](https://travis-ci.org/ev3rt-git/ev3rt-hrp2-base.svg?branch=master)](https://travis-ci.org/ev3rt-git/ev3rt-hrp2-base) | Ubuntu 14.04
