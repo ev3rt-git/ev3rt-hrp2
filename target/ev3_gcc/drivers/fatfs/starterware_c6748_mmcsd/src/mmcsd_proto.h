@@ -182,7 +182,7 @@ typedef struct _mmcsdCardInfo
   unsigned char highCap;
   unsigned int  blkLen;
   unsigned int  nBlks;
-  unsigned int  size;
+  uint64_t      size;
 
   /* Derived from u-boot */
   unsigned int  read_bl_len;  /* Bytes */

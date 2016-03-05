@@ -700,7 +700,7 @@ static unsigned int MMCSDCardGetCSD(mmcsdCtrlInfo *ctrl)
 
     card->tranSpeed = pcsd->tran_speed;
     card->blkLen    = 1 << pcsd->read_bl_len;
-    card->size      = (pcsd->c_size+1)<<19;
+    card->size      = ((uint64_t)(pcsd->c_size+1))<<19;
     card->nBlks     = (card->size) >> pcsd->read_bl_len;
 
     card->tran_speed   = tran_speed_to_freq(pcsd->tran_speed);
@@ -735,9 +735,11 @@ static unsigned int MMCSDCardGetCSD(mmcsdCtrlInfo *ctrl)
     if(card->blkLen > MMCSD_MAX_BLOCK_LEN)
       card->blkLen = MMCSD_MAX_BLOCK_LEN;
   }
+#if defined(DEBUG_MMCSD)
+  syslog(LOG_NOTICE, "CSD: ver=%d,speed=%d,blklen=%d,size=%u MiB,blks=%u",
+          csd_ver, card->tranSpeed, card->blkLen, (uint32_t)(card->size >> 20), card->nBlks);
+#endif
 #if DEBUG_PRINT
-  UARTprintf("CSD: ver=%d,speed=%d,blklen=%d,size=%u,blks=%d\r\n",
-             csd_ver, card->tranSpeed,card->blkLen,card->size,card->nBlks);
   UARTprintf("CSD: trans_speed=%u Hz,read_bl_len=%d bytes,write_bl_len=%d bytes\r\n",
              card->tran_speed, card->read_bl_len, card->write_bl_len);
 #endif
