@@ -88,15 +88,13 @@ void ev3_main_task(intptr_t exinf) {
 	platform_soft_reset();
 
 	// Banner
-	syslog(LOG_NOTICE, "");
-	syslog(LOG_NOTICE, "");
-	syslog(LOG_NOTICE, "");
-	syslog(LOG_NOTICE, "");
 	syslog(LOG_NOTICE, "   _____   ______ ___  ______");
 	syslog(LOG_NOTICE, "  / __/ | / /_  // _ \\/_  __/");
 	syslog(LOG_NOTICE, " / _/ | |/ //_ </ , _/ / /");
 	syslog(LOG_NOTICE, "/___/ |___/____/_/|_| /_/");
-	syslog(LOG_NOTICE, "=============================");
+	syslog(LOG_NOTICE, " ");
+	syslog(LOG_NOTICE, "==============>Beta-6-1-git<=");
+	syslog(LOG_NOTICE, " ");
 	syslog(LOG_NOTICE, "Powered by TOPPERS/HRP2 RTOS");
 	syslog(LOG_NOTICE, "Initialization is completed..");
 

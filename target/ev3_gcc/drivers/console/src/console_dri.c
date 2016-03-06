@@ -112,14 +112,14 @@ static void log_view_refresh_ex(int32_t bottom_line) {
 	log_view_putc('\r');
 
 	// Fill the log view with (CONSOLE_LOG_VIEW_LINES - 1) lines
-	for (int i = bottom_line; i < bottom_line + CONSOLE_LOG_VIEW_LINES - 1; ++i)
+	for (int i = bottom_line + 1; i < bottom_line + CONSOLE_LOG_VIEW_LINES; ++i)
 		for (int j = 0; j < CONSOLE_LOG_VIEW_LINE_WIDTH; ++j)
 			log_view_putc(log_buffer[i][j]);
 
 	// Output bottom line
 	int columns = (bottom_line == log_current_line) ? log_current_column : CONSOLE_LOG_VIEW_LINE_WIDTH;
 	for (int j = 0; j < columns; ++j)
-		log_view_putc(log_buffer[bottom_line + CONSOLE_LOG_VIEW_LINES - 1][j]);
+		log_view_putc(log_buffer[bottom_line + CONSOLE_LOG_VIEW_LINES][j]);
 }
 
 static void log_view_scroll(bool_t up) {
@@ -235,6 +235,7 @@ void lcd_console_send_character(char c) {
     if (c != '\n') {
         log_put_char(c);
     } else {
+    	if (log_current_column != 0)
         for (int i = CONSOLE_LOG_VIEW_LINE_WIDTH - log_current_column; i > 0; --i)
             log_put_char(' ');
     }
