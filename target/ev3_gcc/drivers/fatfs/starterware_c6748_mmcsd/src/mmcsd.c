@@ -491,6 +491,8 @@ void MMCSDCommandSend(unsigned int baseAddr, unsigned int cmd,
 //			syslog(LOG_ERROR, "srcAddr: 0x%08x", param.srcAddr);
 //		}
 
+		HWREG(baseAddr + MMCSD_MMCCMD) = cmd;
+
 		/* enable DMA transfer */
 		assert(dmaEn == 1);
 		cmd |= MMCSD_MMCCMD_DMATRIG;
@@ -510,12 +512,12 @@ void MMCSDCommandSend(unsigned int baseAddr, unsigned int cmd,
 		return;
 	}
 
-//	/**
-//	 * Send CMD12 (STOP_TRANSMISSION) command
-//	 */
-//	if ((cmd & 0x3F) == 12) {
-//		cmd |= MMCSD_MMCCMD_DCLR; // clear previous status
-//	}
+	/**
+	 * Send CMD12 (STOP_TRANSMISSION) command
+	 */
+	if ((cmd & 0x3F) == 12) {
+		cmd |= MMCSD_MMCCMD_DCLR; // clear previous status
+	}
 
   /* data command */
   if (data != NULL)

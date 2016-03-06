@@ -220,7 +220,9 @@ unsigned int MMCSDLibCmdSend(mmcsdCtrlInfo *ctrl, mmcsdCmd *c)
     unsigned int s;
     s =
 #endif
-    MMCSDIntrStatusGetAndClr(ctrl->memBase);
+    unsigned int s = MMCSDIntrStatusGetAndClr(ctrl->memBase);
+    assert(s == 0); // Check no pending interrupts
+    // if (s!=0) syslog(LOG_NOTICE, "%s(): unhandled interrupt 0x%08x", __FUNCTION__, s);
 #if DEBUG_PRINT
     UARTprintf("%s(0x%p,0x%x):status=0x%x\r\n",
                __FUNCTION__, ctrl, c->idx, s);

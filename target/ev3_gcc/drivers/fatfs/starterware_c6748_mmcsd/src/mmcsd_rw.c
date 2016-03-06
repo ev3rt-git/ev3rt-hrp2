@@ -143,6 +143,7 @@ static volatile unsigned int dataTimeout = 0;
 static volatile unsigned int dataCRCError = 0;
 static volatile unsigned int cmdCompFlag = 0;
 static volatile unsigned int cmdTimeout = 0;
+static unsigned int shadow_mmcst0;
 #if DEBUG_PRINT
 static volatile unsigned int intrStatus = 0;
 #endif
@@ -167,6 +168,10 @@ static volatile unsigned int pageTable[MMU_PAGETABLE_NUM_ENTRY]
 /******************************************************************************
 **                          FUNCTION DEFINITIONS
 *******************************************************************************/
+
+static void refresh_mmcsd_status() {
+	MMCSDIsr(0);
+}
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -206,7 +211,7 @@ static unsigned int MMCSDCmdStatusGet(mmcsdCtrlInfo *ctrl)
 #if defined(DEBUG_MMCSD)
   syslog(LOG_EMERG, "%s(): wait for cmdCompFlag or cmdTimeout", __FUNCTION__);
 #endif
-  while ((cmdCompFlag == 0) && (cmdTimeout == 0)) continue; // TODO: timeout for debug?
+  while ((cmdCompFlag == 0) && (cmdTimeout == 0)) refresh_mmcsd_status(); // TODO: timeout for debug?
   assert(!(cmdCompFlag && cmdTimeout)); // Should NEVER be true at the same time!
 #if defined(DEBUG_MMCSD)
   syslog(LOG_EMERG, "%s(): cmdCompFlag or cmdTimeout appeared", __FUNCTION__);
@@ -272,7 +277,17 @@ static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
   syslog(LOG_ERROR, "%s(): wait xferCompFlag|dataTimeout|dataCRCError", __FUNCTION__);
 #endif
   for (volatile int i = 0; !xferCompFlag && !dataTimeout && !dataCRCError; ++i) {
-	  if (i >= timeOut) assert(false); // timeout!
+	  refresh_mmcsd_status();
+	  if (i >= timeOut) { // timeout!
+		  //syslog(LOG_EMERG, "%s(): timeout!", __FUNCTION__);
+		  //syslog(LOG_EMERG, "MMCST0: 0x%08x", MMCSD0.MMCST0);
+		  //syslog(LOG_EMERG, "MMCST1: 0x%08x", MMCSD0.MMCST1);
+		  //syslog(LOG_EMERG, "MMCCMD: 0x%08x", MMCSD0.MMCCMD);
+		  syslog(LOG_EMERG, "MMCNBLC: 0x%08x", MMCSD0.MMCNBLC);
+		  syslog(LOG_EMERG, "MMCNBLK: 0x%08x", MMCSD0.MMCNBLK);
+		  assert(false);
+		  tslp_tsk(1000);
+	  }
   }
   assert((int)xferCompFlag + (int)dataTimeout + (int)dataCRCError == 1); // Only handle one flag
 
@@ -334,6 +349,13 @@ static unsigned int MMCSDXferStatusGet(mmcsdCtrlInfo *ctrl)
 #endif
 
   return(status);
+}
+
+static unsigned int MMCSDWaitMMCST0(mmcsdCtrlInfo *ctrl, unsigned int pattern) {
+	while(!(shadow_mmcst0 & pattern)) refresh_mmcsd_status();
+	unsigned int ret = shadow_mmcst0;
+	shadow_mmcst0 &= ~pattern;
+	return ret;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -461,6 +483,7 @@ static void MMCSDXferSetup(mmcsdCtrlInfo *ctrl, unsigned char rwFlag, void *ptr,
   xferCompFlag = 0;
   dataTimeout  = 0;
   dataCRCError = 0;
+  shadow_mmcst0 = 0;
 
   if (rwFlag == 1)
   {
@@ -495,12 +518,13 @@ static void Edma3ComplCallback(unsigned int tccNum, unsigned int status)
 /*---------------------------------------------------------------------------*/
 void MMCSDIsr(intptr_t unused)
 {
-  volatile unsigned int status = 0;
+  unsigned int status = 0;
 
   status = MMCSDIntrStatusGetAndClr(ctrlInfo.memBase);
+  shadow_mmcst0 |= status;
 
-#if defined(DEBUG) || 0
-  syslog(LOG_ERROR, "%s(): status=0x%08x", __FUNCTION__, status); // TODO: added by ertl-liyixiao
+#if defined(DEBUG_MMCSD)
+  if (status) syslog(LOG_NOTICE, "%s(): status=0x%08x", __FUNCTION__, status);
 //  intrStatus = status;
 #endif
 
@@ -530,11 +554,13 @@ void MMCSDIsr(intptr_t unused)
     syslog(LOG_ERROR, "%s(): dataCRCError!!", __FUNCTION__);
   }
 
-  if (status & MMCSD_MMCST0_DATDNE/* IMPORTANT: MMCSD_STAT_TRNFCOMP IS WRONG -- ertl-liyixiao */)
+  if (status & MMCSD_MMCST0_TRNDNE/* IMPORTANT: MMCSD_STAT_TRNFCOMP IS WRONG -- ertl-liyixiao */)
   {
-    xferCompFlag = 1;
-#if defined(DEBUG) || 0
-  syslog(LOG_ERROR, "%s(): xferCompFlag", __FUNCTION__);
+	  // if (dmaIsRunning) MMCSDStopCmdSend(&ctrlInfo);
+	  xferCompFlag = 1;
+//	  cmdCompFlag = 1;
+#if defined(DEBUG_MMCSD)
+  syslog(LOG_NOTICE, "%s(): MMCSD_MMCST0_TRNDNE", __FUNCTION__);
 #endif
   }
 }
@@ -598,6 +624,7 @@ static void MMCSDControllerSetup(void)
   ctrlInfo.xferSetup      = MMCSDXferSetup;
   ctrlInfo.cmdStatusGet   = MMCSDCmdStatusGet;
   ctrlInfo.xferStatusGet  = MMCSDXferStatusGet;
+  ctrlInfo.waitMMCST0     = MMCSDWaitMMCST0;
   ctrlInfo.cardPresent    = MMCSDLibCardPresent;
   ctrlInfo.cmdSend        = MMCSDLibCmdSend;
   ctrlInfo.busWidthConfig = MMCSDLibBusWidthConfig;
@@ -647,7 +674,8 @@ void initialize_mmcsd() {
     /* Initialize the MMCSD controller */
     MMCSDCtrlInit(&ctrlInfo);
 
-    MMCSDIntEnable(&ctrlInfo);
+    // MMCSDIntEnable(&ctrlInfo);
+
 
     /* Check SD card status */
     while(1) {
@@ -662,13 +690,44 @@ void initialize_mmcsd() {
     /* Initialize device control interface for FatFS */
     diskio_initialize(&sdCard);
 
-//    static char tmpBuf[1024] __attribute__ ((aligned (SOC_EDMA3_ALIGN_SIZE)));
-//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDReadCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf, 0, 1);
-//    dump_mmc(&MMCSD0);
-//    while(1) tslp_tsk(1000);
+#if 0 // Test code for MMCSD IO operations
+    MMCSDCardInit(&ctrlInfo);
+    static char tmpBuf1[512 * 4] __attribute__ ((aligned (SOC_EDMA3_ALIGN_SIZE)));
+    static char tmpBuf2[512 * 4] __attribute__ ((aligned (SOC_EDMA3_ALIGN_SIZE)));
+
+    syslog(LOG_NOTICE, "Test READ_SINGLE_BLOCK (CMD17)");
+    MMCSDReadCmdSend(&ctrlInfo, tmpBuf1, 0, 1);
+
+    syslog(LOG_NOTICE, "Test READ_MULTIPLE_BLOCK (CMD18)");
+    MMCSDReadCmdSend(&ctrlInfo, tmpBuf1, 0, 3);
+
+#if 0 // Test code for READ_MULTIPLE_BLOCK
+    syslog(LOG_NOTICE, "Test READ_MULTIPLE_BLOCK (CMD18)");
+
+    for (int i = 0; i < 10000; ++i) {
+        MMCSDReadCmdSend(&ctrlInfo, tmpBuf1,  i, 1);
+        MMCSDReadCmdSend(&ctrlInfo, tmpBuf1,  i + 1, 1);
+        MMCSDReadCmdSend(&ctrlInfo, tmpBuf2, i, 2);
+        for (int j = 0; j < 1024; ++j) {
+            if (tmpBuf1[j] != tmpBuf2[j]) {
+                syslog(LOG_NOTICE, "Different block %d", i);
+                break;
+            }
+        }
+        if (i % 100 == 0) syslog(LOG_NOTICE, "Compared blocks %d / 10000", i);
+    }
+    while(1) tslp_tsk(1000);
+#endif
+
+    syslog(LOG_NOTICE, "Test WRITE_SINGLE_BLOCK (CMD24)");
+    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf1, 7626740, 1);
+
+    syslog(LOG_NOTICE, "Test WRITE_MULTIPLE_BLOCK (CMD25)");
+    MMCSDWriteCmdSend(&ctrlInfo, tmpBuf1, 7626740, 3);
+
+    syslog(LOG_NOTICE, "Test done");
+    while(1) tslp_tsk(1000);
+#endif
 }
 
 bool_t mmcsd_blockread(void *buf, unsigned int block, unsigned int nblks) {
