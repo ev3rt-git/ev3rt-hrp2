@@ -35,6 +35,7 @@ void ev3_main_task(intptr_t exinf) {
     /**
      * Initialize FatFS
      */
+    sus_tsk(LOGTASK);
     initialize_fatfs_dri();
 
     /**
@@ -54,6 +55,7 @@ void ev3_main_task(intptr_t exinf) {
         assert(ercd > 0);
     }
     serial_opn_por(SIO_PORT_UART);
+    rsm_tsk(LOGTASK);
 
     /**
      * Initialize LCD

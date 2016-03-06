@@ -171,6 +171,7 @@ static volatile unsigned int pageTable[MMU_PAGETABLE_NUM_ENTRY]
 
 static void refresh_mmcsd_status() {
 	MMCSDIsr(0);
+    tslp_tsk(1); // yield CPU if called from task context
 }
 
 /*---------------------------------------------------------------------------*/
@@ -208,12 +209,12 @@ static unsigned int MMCSDCmdStatusGet(mmcsdCtrlInfo *ctrl)
 #else
 
   /* Wait for these flags what will be modified by the MMCSDIsr() */
-#if defined(DEBUG_MMCSD)
+#if defined(DEBUG_MMCSD) && 0
   syslog(LOG_EMERG, "%s(): wait for cmdCompFlag or cmdTimeout", __FUNCTION__);
 #endif
   while ((cmdCompFlag == 0) && (cmdTimeout == 0)) refresh_mmcsd_status(); // TODO: timeout for debug?
   assert(!(cmdCompFlag && cmdTimeout)); // Should NEVER be true at the same time!
-#if defined(DEBUG_MMCSD)
+#if defined(DEBUG_MMCSD) && 0
   syslog(LOG_EMERG, "%s(): cmdCompFlag or cmdTimeout appeared", __FUNCTION__);
 #endif
 
@@ -523,7 +524,7 @@ void MMCSDIsr(intptr_t unused)
   status = MMCSDIntrStatusGetAndClr(ctrlInfo.memBase);
   shadow_mmcst0 |= status;
 
-#if defined(DEBUG_MMCSD)
+#if defined(DEBUG_MMCSD) && 0
   if (status) syslog(LOG_NOTICE, "%s(): status=0x%08x", __FUNCTION__, status);
 //  intrStatus = status;
 #endif
@@ -559,7 +560,7 @@ void MMCSDIsr(intptr_t unused)
 	  // if (dmaIsRunning) MMCSDStopCmdSend(&ctrlInfo);
 	  xferCompFlag = 1;
 //	  cmdCompFlag = 1;
-#if defined(DEBUG_MMCSD)
+#if defined(DEBUG_MMCSD) && 0
   syslog(LOG_NOTICE, "%s(): MMCSD_MMCST0_TRNDNE", __FUNCTION__);
 #endif
   }
