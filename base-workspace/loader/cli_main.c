@@ -23,7 +23,7 @@ static bool_t load_success;
 /**
  * Buffer to store the application module file
  */
-static STK_T app_binary_buf[COUNT_STK_T(TMAX_APP_BINARY_SIZE)] __attribute__((nocommon));
+static STK_T app_binary_buf[COUNT_STK_T(TMAX_APP_BINARY_SIZE)] __attribute__((nocommon,aligned(SOC_EDMA3_ALIGN_SIZE)));
 
 #if 0
 // For debug
@@ -183,28 +183,20 @@ void test_sd_loader(intptr_t unused) {
 				assert(res == FR_OK);
 
 				// Read
-				char *ptr_c = (void*)app_binary_buf;
-				while (1) {
-					UINT br;
-					res = f_read(&fil, ptr_c, 1, &br);
-					assert(res == FR_OK);
-					if (br > 0)
-						ptr_c += br;
-					else
-						break;
-				}
+                uint32_t filesz = f_size(&fil);
+                if (filesz > TMAX_APP_BINARY_SIZE) {
+					show_message_box("Error", "Application is too large.");
+                    return;
+                }
+
+				UINT br;
+				res = f_read(&fil, app_binary_buf, filesz, &br);
+                assert(res == FR_OK);
+                assert(br == filesz);
+
 				res = f_close(&fil);
 				assert(res == FR_OK);
 
-
-#if 0
-				FILE *fin = fopen(filepath, "rb");
-				while (fread(ptr_c, 1, 1, fin) > 0)
-					ptr_c++;
-				fclose(fin);
-#endif
-
-				SIZE filesz = ptr_c - (char*)app_binary_buf;
 				syslog(LOG_NOTICE, "Loading file completed, file size: %d.", filesz);
 
 				ER ercd = load_application(app_binary_buf, filesz);
