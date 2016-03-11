@@ -48,6 +48,7 @@ void application_terminate_task(intptr_t unused) {
 	} else {
 		assert(ercd == E_OK); // Application is not running
 	}
+    bluetooth_qos_set_enable(false);
 }
 
 void application_terminate_request() {

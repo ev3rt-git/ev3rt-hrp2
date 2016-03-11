@@ -269,7 +269,7 @@ ER application_load_menu() {
 			if (load_success) return E_OK; // MMCSD will be released on unloading
 			release_mmcsd();
 		} else {
-			show_message_box("Error", "Please unplug   the USB cable!");
+			show_message_box("Error", "Please eject USB");
 		}
 	}
 	return E_PAR;

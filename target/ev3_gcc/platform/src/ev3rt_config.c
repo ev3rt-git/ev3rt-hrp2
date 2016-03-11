@@ -6,6 +6,7 @@
  */
 
 #include "minIni.h"
+#include "btstack-interface.h"
 
 #define CFG_INI_FILE  ("/ev3rt/etc/rc.conf.ini")
 
@@ -42,18 +43,5 @@ void ev3rt_load_configuration() {
 	auto_term_app = ini_getbool("USB", "AutoTerminateApp", true, CFG_INI_FILE);
 	ini_putl("USB", "AutoTerminateApp", auto_term_app, CFG_INI_FILE);
 	ev3rt_usb_auto_terminate_app = &auto_term_app;
-}
-
-#include "btstack-interface.h"
-
-#define LINK_KEY_FILE ("/ev3rt/etc/bt_link_keys")
-
-void btstack_db_put(const char *addr, const char *link_key) {
-	ini_puts("LinkKey", addr, link_key, LINK_KEY_FILE);
-}
-
-int btstack_db_get(const char *addr, char *link_key) {
-	ini_gets("LinkKey", addr, "", link_key, BTSTACK_DB_VAL_SIZE, LINK_KEY_FILE);
-	return link_key[0] != '\0';
 }
 

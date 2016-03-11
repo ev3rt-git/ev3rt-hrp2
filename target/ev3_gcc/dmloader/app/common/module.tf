@@ -4,6 +4,8 @@ $FILE "module_cfg.c"$
 #include "target_config.h"$NL$
 #include "platform_interface_layer.h"$NL$
 $INCLUDES$
+$FILE "module_cfg.h"$
+#pragma once
 
 $tnum_mod_cfg_entries = 0$
 

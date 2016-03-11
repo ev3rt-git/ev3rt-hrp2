@@ -1,11 +1,7 @@
 #include <kernel.h>
 #include "kernel_cfg.h"
-#include "platform.h"
 #include "platform_interface_layer.h"
-#include "driver_common.h"
-#include "brick_dri.h"
-#include "lcd_dri.h"
-#include "console_dri.h"
+#include "csl.h"
 
 typedef struct {
     const char *title;
@@ -17,6 +13,7 @@ typedef struct {
 static inline
 void ev3rt_console_start_app() {
 	ev3rt_console_set_visibility(false);
+    bluetooth_qos_set_enable(true); // Enable Bluetooth QoS for real-time performance
 	platform_pause_application(false);
 }
 
@@ -46,6 +43,14 @@ static void run_app(intptr_t unused) {
 #endif
 
 static void shutdown(intptr_t unused) {
+#if defined(BUILD_LOADER)
+	application_terminate_request();
+	application_terminate_wait();
+#endif
+    if (try_acquire_mmcsd() != E_OK) {
+	    syslog(LOG_ERROR, "Please eject the USB!");
+        return;
+    }
 	syslog(LOG_NOTICE, "Shutdown EV3...");
 	ext_ker();
 }

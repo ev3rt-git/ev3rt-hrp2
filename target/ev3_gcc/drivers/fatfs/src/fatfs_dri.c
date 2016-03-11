@@ -7,7 +7,7 @@
 
 #include <t_syslog.h>
 #include "syssvc/serial.h"
-#include "platform.h"
+#include "csl.h"
 #include "kernel_cfg.h"
 #include "soc.h"
 #include "../ff10b/src/diskio.h"
@@ -39,8 +39,10 @@ static FATFS fatfs_sd; // File system object structure for SD card
 
 // Mount or unmount the SD card
 void fatfs_set_enabled(bool_t enabled) {
+    btstack_db_lock(); // Wait completion of BTstack database I/O
     FRESULT ret = f_mount((enabled ? &fatfs_sd : NULL), "0:/", 1);
     assert(ret == FR_OK);
+    btstack_db_unlock();
 }
 
 extern void initialize_mmcsd(); // TODO: Should be somewhere else. -- ertl-liyixiao

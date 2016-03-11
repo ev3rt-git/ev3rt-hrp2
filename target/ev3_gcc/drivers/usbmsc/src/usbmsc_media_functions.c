@@ -31,23 +31,16 @@ static void *usbmsc_open_mmcsd(unsigned int ulDrive) {
 static void usbmsc_close_mmcsd(void * pvDrive) {
 	// Do nothing
 #if defined(DEBUG_USBMSC)
-		syslog(LOG_EMERG, "%s() called", __FUNCTION__);
+		syslog(LOG_NOTICE, "%s() called", __FUNCTION__);
 #endif
 }
 
 static unsigned int usbmsc_blockread_mmcsd(void *pvDrive, unsigned char *pucData, unsigned int ulSector, unsigned int ulNumBlocks) {
-#if defined(DEBUG_USBMSC) && 0
-		syslog(LOG_EMERG, "%s() start", __FUNCTION__);
-#endif
 	mmcsd_blockread(pucData, ulSector, ulNumBlocks);
-#if defined(DEBUG_USBMSC) && 0
-		syslog(LOG_EMERG, "%s() finish", __FUNCTION__);
-#endif
    	return mmcsd_blocklen() * ulNumBlocks;
 }
 
 static unsigned int usbmsc_blockwrite_mmcsd(void * pvDrive, unsigned char *pucData, unsigned int ulSector, unsigned int ulNumBlocks) {
-	// assert(ulNumBlocks <= 1);
 	if (ulNumBlocks > 0) {
 		if (write_buffer_blocks == 0) write_buffer_lba = ulSector;
 		if (write_buffer_blocks + ulNumBlocks > WRITE_BUFFER_MAX_BLOCKS || write_buffer_lba + write_buffer_blocks != ulSector) { // Write buffer is too small || LBA is not continuous

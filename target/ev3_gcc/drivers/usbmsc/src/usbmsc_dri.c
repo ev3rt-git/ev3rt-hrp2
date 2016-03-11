@@ -89,6 +89,7 @@ void usbmsc_task(intptr_t unused) {
 		ercd = wai_flg(USBMSC_EVT_FLG, USBMSC_EVT_DISCONN, TWF_ANDW, &flgptn);
 		assert(ercd == E_OK);
 		fatfs_set_enabled(true);
+        btstack_db_cache_flush(); // Flush BTstack database cache to file since it may be updated
 		syslog(LOG_NOTICE, "USB is disconnected.");
 		release_mmcsd();
 	}
