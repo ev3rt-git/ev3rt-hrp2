@@ -15,6 +15,7 @@
 #include <t_stdlib.h>
 #include "syssvc/syslog.h"
 #include "syssvc/serial.h"
+#include "syssvc/logtask.h"
 #include "target_syssvc.h"
 #include "target_serial.h"
 #include "kernel_cfg.h"
@@ -35,7 +36,7 @@ void ev3_main_task(intptr_t exinf) {
     /**
      * Initialize FatFS
      */
-    sus_tsk(LOGTASK);
+    ter_tsk(LOGTASK); // Kill default logtask, TODO: remove LOGTASK from configuration to save memory?
     initialize_fatfs_dri();
 
     /**
@@ -55,7 +56,7 @@ void ev3_main_task(intptr_t exinf) {
         assert(ercd > 0);
     }
     serial_opn_por(SIO_PORT_UART);
-    rsm_tsk(LOGTASK);
+    act_tsk(EV3RT_LOGTASK); // Activate our logtask
 
     /**
      * Initialize LCD
@@ -93,7 +94,7 @@ void ev3_main_task(intptr_t exinf) {
 	syslog(LOG_NOTICE, " / _/ | |/ //_ </ , _/ / /");
 	syslog(LOG_NOTICE, "/___/ |___/____/_/|_| /_/");
 	syslog(LOG_NOTICE, " ");
-	syslog(LOG_NOTICE, "==============>Beta-6-1-git<=");
+	syslog(LOG_NOTICE, "==============>Beta-6-2-git<=");
 	syslog(LOG_NOTICE, " ");
 	syslog(LOG_NOTICE, "Powered by TOPPERS/HRP2 RTOS");
 	syslog(LOG_NOTICE, "Initialization is completed..");
@@ -231,7 +232,7 @@ svc_perror(const char *file, int_t line, const char *expr, ER ercd) {
     }
 }
 
-#if 0 // Legacy code
+void ev3rt_logtask(intptr_t unused) {
+    logtask_main(SIO_PORT_DEFAULT);
+}
 
-
-#endif

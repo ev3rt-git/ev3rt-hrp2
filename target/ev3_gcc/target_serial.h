@@ -31,11 +31,6 @@
 typedef struct sio_port_control_block SIOPCB;
 
 /*
- *  SIOドライバの初期化
- */
-extern void sio_initialize(intptr_t exinf);
-
-/*
  *  低レベル出力シリアルI/Oの初期化
  */
 extern void sio_initialize_low();

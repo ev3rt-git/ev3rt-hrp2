@@ -28,6 +28,7 @@ extern int           DEBUG_UART;                   //!< UART used for debug in L
  */
 extern void ev3_main_task(intptr_t exinf);
 extern void platform_busy_task(intptr_t exinf);
+extern void ev3rt_logtask(intptr_t exinf);
 
 /**
  * Exceptions

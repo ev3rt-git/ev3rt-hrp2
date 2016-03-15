@@ -83,15 +83,8 @@
 #define APP_HEAP_SIZE    (1024 * 1024) //!< Heap size for dynamic memory allocation in TDOM_APP
 
 /**
- * Default SIO Port for syslog etc.
- */
-#define SIO_PORT_DEFAULT SIO_PORT_LCD
-
-/**
  * Bluetooth configuration
  */
-//#define BLUETOOTH_LOCAL_NAME   ("Mindstorms EV3") //!< Name for service discovery
-//#define BLUETOOTH_PIN_CODE     ("0000")           //!< Pin code for authentication, NULL to use secure simple pairing
 #define BT_SND_BUF_SIZE        (2048)             //!< Size of send buffer
 #define BT_HIGH_PRI_TIME_SLICE (1)                //!< Time slice for BT_TSK in high priority mode (mS)
 #define BT_LOW_PRI_TIME_SLICE  (19)               //!< Time slice for BT_TSK in low priority mode (mS)
@@ -122,17 +115,10 @@
 #define TMAX_EV3_CYC_NUM       (16)   //!< Maximum number of EV3_CRE_CYC in a user application
 
 /**
- * UART sensor driver
+ * Default SIO Port for syslog etc.
  */
 #ifndef TOPPERS_MACRO_ONLY
-extern void uart_sensor_isr(intptr_t irq);
-#endif
-
-/**
- * GPIO driver
- */
-#ifndef TOPPERS_MACRO_ONLY
-extern void gpio_initialize(intptr_t unused);
+extern int SIO_PORT_DEFAULT;
 #endif
 
 /**

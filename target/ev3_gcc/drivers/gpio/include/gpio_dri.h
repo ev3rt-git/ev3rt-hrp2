@@ -73,3 +73,9 @@ extern void gpio_irq_dispatcher(intptr_t exinf);
 bool_t gpio_get_value(uint32_t pin);
 
 void gpio_set_value(uint32_t pin, bool_t value);
+
+/**
+ * For configuration file
+ */
+
+void gpio_initialize(intptr_t unused);

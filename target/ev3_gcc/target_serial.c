@@ -65,25 +65,10 @@ static SIOPCB siopcb_table[TNUM_PORT] = {
 #define INDEX_SIOP(siopid)           ((uint_t)((siopid) - 1)) 
 
 /*
- *  SIOドライバの初期化
- */
-void sio_initialize(intptr_t exinf){
-    //TODO: dirty hack
-//    int i;
-//    for(i = 0; i < TNUM_SIOP; ++i)
-//        if(i != LOWLEVEL_PORTID && i != 2)
-//            uart_init(siopcb_table[i].p_uart);
-}
-
-/*
  *  低レベル出力シリアルI/Oの初期化
  */
 void sio_initialize_low(){
-	//SIOPCB *p_siopcb = &siopcb_table[INDEX_SIOP(LOWLEVEL_PORTID)];
     uart_init(&UART1);
-
-//    UART1.IER |= 0x4; // Enable LSR interrupt
-	//uart_open(p_siopcb->p_uart);
 }
 
 /**
@@ -226,19 +211,11 @@ static SIOPCB* const uart_siopcb = &siopcb_table[INDEX_SIOP(SIO_PORT_UART)];
 void
 target_fput_log(char c)
 {
-    /*if(uart_siopcb->openflag)
-        serial_wri_dat(SIO_PORT_UART, &c, (uint_t)1);
-    else {
-    }*/
-//	while(!uart_send(&UART1, c));
-    //uart_t *p_uart = siopcb_table[INDEX_SIOP(LOWLEVEL_PORTID)].p_uart;
-
+    // Port 1 is always used for low level ouput (e.g. LOG_EMERG)
 	if (c == '\n') {
 		while(!uart_send(&UART1, '\r'));
 	}
 	while(!uart_send(&UART1, c));
-
-    //bluetooth_spp_putchar(c);
 }
 
 static bool_t uart_snd_cbflg, uart_rcv_cbflg;

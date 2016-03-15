@@ -23,11 +23,4 @@
  */
 extern void	target_fput_log(char c);
 
-/*
- *  ログタスクで使用するポート
- */
-#define LOGTASK_PORTID  SIO_PORT_DEFAULT
-#define TASK_PORTID     SIO_PORT_DEFAULT
-#define LOWLEVEL_PORTID SIO_PORT_DEFAULT
-
 #endif /* TOPPERS_TARGET_SYSSVC_H */

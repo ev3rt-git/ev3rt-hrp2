@@ -14,14 +14,6 @@ TEXT_START_ADDRESS     textセグメントの開始アドレスの定義
 DATA_START_ADDRESS     dataセグメントの開始アドレスの定義
 OMIT_OPTIMIZATION      For Debugging
 
-target_syssvc.h:
-LOGTASK_PORTID
-TASK_PORTID
-LOWLEVEL_PORTID
-
-target_test.h:
-TASK_PORTID
-
 ○関数
 target_config.c/h:
 target_initialize
