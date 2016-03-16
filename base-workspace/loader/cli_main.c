@@ -203,6 +203,8 @@ void test_sd_loader(intptr_t unused) {
 				if (ercd == E_OK) {
 					load_success = true;
 					return;
+                } else if (ercd == E_NOSPT) {
+					show_message_box("Error", "App ver. before\n"PIL_VERSION_STRING" must be\nrecompiled.");
 				} else {
 					syslog(LOG_NOTICE, "Load application failed, ercd: %d.", ercd);
 					show_message_box("Error", "Failed to load application.");

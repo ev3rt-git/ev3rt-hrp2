@@ -38,6 +38,7 @@ ER dmloader_ref_ldm(ID ldm_can_id, T_RLDM *pk_rldm);
  * E_OBJ: LDM container is not free
  * E_PAR: Corrupted ELF data
  * E_NOMEM: LDM container doesn't have enough memory
+ * E_NOSPT: Incompatible PIL version, TODO: refactor dmloader
  */
 static inline
 ER dmloader_ins_ldm(const uint8_t *mod_data, uint32_t mod_data_sz, ID ldm_can_id) {

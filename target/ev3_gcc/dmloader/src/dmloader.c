@@ -328,7 +328,7 @@ ER _dmloader_ins_ldm(const uint8_t *mod_data, uint32_t mod_data_sz, ID ldm_can_i
     uint32_t mod_pil_version = *(uint32_t*)ctx.sym__module_pil_version;
     if (PIL_VERSION != mod_pil_version) {
     	syslog(LOG_ERROR, "%s(): Wrong PIL version. FW PIL VER: %d, APP PIL VER: %d.", __FUNCTION__, PIL_VERSION, mod_pil_version);
-    	ercd = E_PAR;
+    	ercd = E_NOSPT;
     	goto error_exit;
     }
 
