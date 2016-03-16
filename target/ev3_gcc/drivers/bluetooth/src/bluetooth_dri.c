@@ -312,11 +312,30 @@ inline void btstack_db_unlock() {
     assert(ercd == E_OK);
 }
 
-inline void btstack_db_modify(const char *addr, const char *link_key) {
+inline void btstack_db_append(const char *addr, const char *link_key) {
+#if defined(DEBUG_BLUETOOTH)
+        SYSTIM tim1, tim2;
+        get_tim(&tim1);
+	    //ini_puts("LinkKey", addr, link_key, LINK_KEY_FILE);
+#endif
+    static FIL dbfile;
     if (addr) {
-	    ini_puts("LinkKey", addr, link_key, LINK_KEY_FILE);
+        assert(link_key != NULL);
+        f_open(&dbfile, LINK_KEY_FILE, FA_WRITE | FA_OPEN_ALWAYS);
+        f_lseek(&dbfile, f_size(&dbfile));
+        f_printf(&dbfile, "%s=%s\r\n", addr, link_key);
+        f_close(&dbfile);
     } else {
-        f_unlink(LINK_KEY_FILE);
+        const char *section = "[LinkKey]\r\n";
+        UINT bw;
+        f_open(&dbfile, LINK_KEY_FILE, FA_WRITE | FA_OPEN_ALWAYS);
+        f_write(&dbfile, section, strlen(section), &bw);
+        f_truncate(&dbfile);
+        f_close(&dbfile);
     }
+#if defined(DEBUG_BLUETOOTH)
+        get_tim(&tim2);
+        syslog(LOG_NOTICE, "%s(addr%c=NULL) costs %d ms", __FUNCTION__, (addr ? '!' : '='), tim2 - tim1);
+#endif
 }
 
