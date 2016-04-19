@@ -17,5 +17,7 @@ before_script:
  - cd cfg
  - make
  - cd ../base-workspace
+ - make app=loader
+ - cd ../sdk/workspace
 
-script: make app=loader
+script: make app=helloev3
