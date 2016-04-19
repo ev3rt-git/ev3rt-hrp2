@@ -4,3 +4,6 @@
 [submodule "modules/usblib"]
 	path = modules/usblib
 	url = https://github.com/ev3rt-git/usblib.git
+[submodule "sdk"]
+	path = sdk
+	url = https://github.com/ev3rt-git/ev3rt-hrp2-sdk.git
