@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <kernel.h>
 #include <itron.h>
 #include <t_syslog.h>
