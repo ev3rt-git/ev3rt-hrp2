@@ -30,6 +30,9 @@
 # System image
 uImage
 
+# Build directories
+OBJ/
+
 # Debug files
 *.dSYM/
 
