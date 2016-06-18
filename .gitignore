@@ -27,6 +27,9 @@
 *.x86_64
 *.hex
 
+# System image
+uImage
+
 # Debug files
 *.dSYM/
 
