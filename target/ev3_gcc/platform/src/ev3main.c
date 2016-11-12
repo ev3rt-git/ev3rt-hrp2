@@ -94,7 +94,7 @@ void ev3_main_task(intptr_t exinf) {
 	syslog(LOG_NOTICE, " / _/ | |/ //_ </ , _/ / /");
 	syslog(LOG_NOTICE, "/___/ |___/____/_/|_| /_/");
 	syslog(LOG_NOTICE, " ");
-	syslog(LOG_NOTICE, "==============>Beta-6-2-git<=");
+	syslog(LOG_NOTICE, "==============>Beta-6-3-git<=");
 	syslog(LOG_NOTICE, " ");
 	syslog(LOG_NOTICE, "Powered by TOPPERS/HRP2 RTOS");
 	syslog(LOG_NOTICE, "Initialization is completed..");
