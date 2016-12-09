@@ -7,11 +7,12 @@
 
 #include <kernel.h>
 #include <t_syslog.h>
+#include <string.h>
 #include "hw/hw_types.h"
 #include "edma.h"
 #include "psc.h"
-#include "soc_AM1808.h"
-#include "soc_edma.h"
+#include "soc.h"
+//#include "soc_edma.h"
 
 /*
 * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
@@ -45,6 +46,25 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+static void dump_param(unsigned int baseAdd, unsigned int PaRAMId) {
+    EDMA3CCPaRAMEntry param;
+    EDMA3GetPaRAM(baseAdd, PaRAMId, &param);
+    syslog(LOG_DEBUG, "EDMA3_CC0.EER: 0x%08x", EDMA3_CC0.EER);
+    syslog(LOG_ERROR, "PaRAM.aCnt: %d", param.aCnt);
+    syslog(LOG_ERROR, "PaRAM.bCnt: %d", param.bCnt);
+    syslog(LOG_ERROR, "PaRAM.bCntReload: %d", param.bCntReload);
+    syslog(LOG_ERROR, "PaRAM.cCnt: %d", param.cCnt);
+    syslog(LOG_ERROR, "PaRAM.destAddr: 0x%x", param.destAddr);
+    syslog(LOG_ERROR, "PaRAM.destBIdx: %d", param.destBIdx);
+    syslog(LOG_ERROR, "PaRAM.destCIdx: %d", param.destCIdx);
+    syslog(LOG_ERROR, "PaRAM.linkAddr: 0x%x", param.linkAddr);
+    syslog(LOG_ERROR, "PaRAM.opt: 0x%x", param.opt);
+    syslog(LOG_ERROR, "PaRAM.srcAddr: 0x%x", param.srcAddr);
+    syslog(LOG_ERROR, "PaRAM.srcBIdx: %d", param.srcBIdx);
+    syslog(LOG_ERROR, "PaRAM.srcCIdx: %d", param.srcCIdx);
+}
+
+
 void
 soc_edma3_initialize(intptr_t unused) {
     /* Enabling the PSC for EDMA3CC_0.*/ 
@@ -59,6 +79,55 @@ soc_edma3_initialize(intptr_t unused) {
 	syslog(LOG_DEBUG, "EDMA3_CC0.ER: 0x%08x", EDMA3_CC0.ER);
 	syslog(LOG_DEBUG, "EDMA3_CC0.EMR: 0x%08x", EDMA3_CC0.EMR);
 	EDMA3_CC0.ECR = EDMA3_SET_ALL_BITS; // Clean all EDMA3 channels. IMPORTANT: Necessary for MMC/SD RX to work correctly
+
+	// Initialize SOC_EDMA3_CHA_DUMMY
+    EDMA3CCPaRAMEntry paramSet;
+    memset(&paramSet, 0, sizeof(paramSet));
+
+    /* Fill the PaRAM Set with transfer specific information. */
+
+    /* aCnt holds the number of bytes in an array. */
+    paramSet.aCnt = (unsigned short) 1;
+
+    /* bCnt holds the number of such arrays to be transferred. */
+    paramSet.bCnt = (unsigned short) 0;
+
+    /* cCnt holds the number of frames of aCnt*bBcnt bytes to be transferred. */
+    paramSet.cCnt = (unsigned short) 1;
+
+    /*
+    ** The srcBidx should be incremented by aCnt number of bytes since the
+    ** source used here is  memory.
+    */
+//    paramSet.srcBIdx = (short) 1;
+
+    /* A sync Transfer Mode is set in OPT.*/
+    /* srCIdx and destCIdx set to zero since ASYNC Mode is used. */
+    paramSet.srcCIdx = (short) 0;
+
+    /* Linking transfers in EDMA3 are not used. */
+    paramSet.linkAddr = EDMA3CC_OPT(SOC_EDMA3_CHA_DUMMY);
+//    (unsigned short)0xFFFF;
+    paramSet.bCntReload = (unsigned short)0;
+
+    paramSet.opt = 0x00000000;
+
+    /* SAM field in OPT is set to zero since source is memory and memory
+       pointer needs to be incremented. DAM field in OPT is set to zero
+       since destination is not a FIFO. */
+
+    /* Set TCC field in OPT with the tccNum. */
+//    paramSet.opt |= ((tccNum << EDMA3CC_OPT_TCC_SHIFT) & EDMA3CC_OPT_TCC);
+
+    /* EDMA3 Interrupt is enabled and Intermediate Interrupt Disabled.*/
+//    paramSet.opt |= (1 << EDMA3CC_OPT_TCINTEN_SHIFT);
+
+    /* Now write the PaRam Set to EDMA3.*/
+    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, SOC_EDMA3_CHA_DUMMY, &paramSet);
+
+    // Clear unused channels
+//    EDMA3_CC0.EECR = 1 << EDMA3_CHA_SPI1_RX;
+//    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI1_RX, &paramSet);
 
     /*
     ** Enable AINTC to handle interrupts. Also enable IRQ interrupt in
@@ -95,6 +164,8 @@ EDMA30ComplIsr(intptr_t unused) {
 //    unsigned int Cnt = 0;
 //    indexl = 1;
 
+    uint32_t eer = EDMA3_CC0.EER;
+
     while((isIPR = HWREG(baseAdd + EDMA3CC_S_IPR(regionNum))) != 0)
     {
 //        while ((Cnt < EDMA3CC_COMPL_HANDLER_RETRY_COUNT)&& (indexl != 0u))
@@ -117,7 +188,12 @@ EDMA30ComplIsr(intptr_t unused) {
 #if defined(DEBUG)
                     syslog(LOG_ERROR, "%s(): Transfer request of channel %d is completed.", __FUNCTION__, indexl);
 #endif
-                    edma_isrs[indexl](edma_isr_exinfs[indexl]);
+                    if (edma_isrs[indexl]) {
+                        edma_isrs[indexl](edma_isr_exinfs[indexl]);
+                    } else if (eer & (1 << indexl)) {
+                        syslog(LOG_ERROR, "%s(): unregistered transfer request of channel %d is completed.", __FUNCTION__, indexl);
+                        dump_param(baseAdd, indexl);
+                    }
                 }
                 ++indexl;
                 pendingIrqs >>= 1u;
@@ -157,20 +233,7 @@ EDMA30CCErrIsr(intptr_t unused) {
                 if((pendingIrqs & 1u)==TRUE)
                 {
                 	syslog(LOG_ERROR, "EDMA3 Error. EDMA3CC_EMR channel %d", index);
-//                	EDMA3CCPaRAMEntry param;
-//                	EDMA3GetPaRAM(baseAdd, index, &param);
-//                	syslog(LOG_ERROR, "PaRAM.aCnt: %d", param.aCnt);
-//                	syslog(LOG_ERROR, "PaRAM.bCnt: %d", param.bCnt);
-//                	syslog(LOG_ERROR, "PaRAM.bCntReload: %d", param.bCntReload);
-//                	syslog(LOG_ERROR, "PaRAM.cCnt: %d", param.cCnt);
-//                	syslog(LOG_ERROR, "PaRAM.destAddr: 0x%x", param.destAddr);
-//                	syslog(LOG_ERROR, "PaRAM.destBIdx: %d", param.destBIdx);
-//                	syslog(LOG_ERROR, "PaRAM.destCIdx: %d", param.destCIdx);
-//                	syslog(LOG_ERROR, "PaRAM.linkAddr: 0x%x", param.linkAddr);
-//                	syslog(LOG_ERROR, "PaRAM.opt: 0x%x", param.opt);
-//                	syslog(LOG_ERROR, "PaRAM.srcAddr: 0x%x", param.srcAddr);
-//                	syslog(LOG_ERROR, "PaRAM.srcBIdx: %d", param.srcBIdx);
-//                	syslog(LOG_ERROR, "PaRAM.srcCIdx: %d", param.srcCIdx);
+
                     /* Write to EMCR to clear the corresponding EMR bits.*/
                     HWREG(baseAdd + EDMA3CC_EMCR) = (1u<<index);
                     /*Clear any SER*/

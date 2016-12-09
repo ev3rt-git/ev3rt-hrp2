@@ -88,7 +88,7 @@
 #define BT_SND_BUF_SIZE        (2048)             //!< Size of send buffer
 #define BT_HIGH_PRI_TIME_SLICE (1)                //!< Time slice for BT_TSK in high priority mode (mS)
 #define BT_LOW_PRI_TIME_SLICE  (19)               //!< Time slice for BT_TSK in low priority mode (mS)
-#define BT_USE_EDMA_MODE       (false)            //!< true: EDMA mode, false: interrupt mode
+#define BT_USE_EDMA_MODE       (true)            //!< true: EDMA mode, false: interrupt mode
 
 /**
  * Loadable application module configuration (Dynamic loading)

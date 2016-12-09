@@ -47,6 +47,14 @@ void initialize_lcd_spi() {
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, \
                         EDMA3_CHA_SPI1_TX, EDMA3_CHA_SPI1_TX, SOC_EDMA3_EVT_QUEUE_NUM);
 
+    /**
+     * FIXME: Disable EDMA3_CHA_SPI1_RX since we don't handle it currently
+     */
+    EDMA3CCPaRAMEntry param;
+    EDMA3GetPaRAM(SOC_EDMA30CC_0_REGS, SOC_EDMA3_CHA_DUMMY, &param);
+    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI1_RX, &param);
+    EDMA3_CC0.EECR = 1 << EDMA3_CHA_SPI1_RX;
+
 	/**
 	 * Initialize the SPI following '29.2.19 Initialization' in 'AM18xx ARM Microprocessor Technical Reference Manual' (spruh82a)
 	 */
@@ -133,7 +141,7 @@ static void SpiTxEdmaParamSet(unsigned int tccNum, unsigned int chNum,
     paramSet.srcCIdx = (short) 0;
 
     /* Linking transfers in EDMA3 are not used. */
-    paramSet.linkAddr = (unsigned short)0xFFFF;
+    paramSet.linkAddr = EDMA3CC_OPT(SOC_EDMA3_CHA_DUMMY); //(unsigned short)0xFFFF;
     paramSet.bCntReload = (unsigned short)0;
 
     paramSet.opt = 0x00000000;
@@ -158,7 +166,7 @@ static void SpiTxEdmaParamSet(unsigned int tccNum, unsigned int chNum,
 int lcd_spi_write(const void *buf, size_t len) {
 	EDMA30SetComplIsr(EDMA3_CHA_SPI1_TX, lcd_spi_edma_compl, EDMA3_CHA_SPI1_TX);
 
-//	syslog(LOG_EMERG, "%s(): enter", __FUNCTION__);
+//	syslog(LOG_ERROR, "%s(): enter", __FUNCTION__);
 
 	// 9. Enable the SPI communication by setting the SPIGCR1.ENABLE to 1.
 	SPIEnable(LCD_SPI_BASEADDR);

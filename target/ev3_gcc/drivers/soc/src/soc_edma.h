@@ -23,4 +23,6 @@ extern void EDMA30CCErrIsr(intptr_t);
  */
 extern void EDMA30SetComplIsr(uint_t tcc, ISR isr, intptr_t exinf);
 
-#define SOC_EDMA3_EVT_QUEUE_NUM	(0) //!< Default event queue number for DMA channels
+#define SOC_EDMA3_EVT_QUEUE_NUM (0)   // Default event queue number for DMA channels
+#define EDMA3_CHA_UART2_RX_PONG (126)
+#define SOC_EDMA3_CHA_DUMMY     (127) // Channel number of a dummy PaRAM set
