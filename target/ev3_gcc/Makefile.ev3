@@ -7,13 +7,7 @@ CDEFS += -DBUILD_EV3_PLATFORM -DOMIT_INITIALIZE_SECTIONS
 INCLUDES += -I$(TARGETDIR)/drivers
 KERNEL_DIR += $(TARGETDIR)/drivers $(TARGETDIR)/api
 
-ifdef USE_CXX
-#APPL_CXXOBJS += EV3.o ev3main.o Motor.o Sensor.o UARTSensor.o
-APPL_CXXOBJS += 
-APPL_COBJS += ev3main.o tlsf.o
-else
-APPL_COBJS += ev3main.o tlsf.o
-endif
+APPL_COBJS += ev3main.o tlsf.o target_serial_dbsio.o
 
 #
 # Include Makefile for API and device drivers

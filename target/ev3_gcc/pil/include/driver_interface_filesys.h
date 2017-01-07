@@ -31,6 +31,7 @@ ER _filesys_closedir(ID dirid);
 #define SIO_STD_FILENO  (3) //!< SIO_PORT_DEFAULT
 #define SIO_UART_FILENO (4) //!< SIO_PORT_UART
 #define SIO_BT_FILENO   (5) //!< SIO_PORT_BT
+#define SIO_PORT_SPP_MASTER_TEST_FILENO (6)
 
 /**
  * File attributes
