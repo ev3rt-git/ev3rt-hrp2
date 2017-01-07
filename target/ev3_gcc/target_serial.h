@@ -1,17 +1,12 @@
 #pragma once
 
 /*
- *  チップ依存モジュール
- */
-//#include "chip_serial.h"
-
-/*
  *  コールバックルーチンの識別番号
  */
 #define SIO_RDY_SND    1U        /* 送信可能コールバック */
 #define SIO_RDY_RCV    2U        /* 受信通知コールバック */
 
-#define TNUM_PORT 3
+#define TNUM_PORT 4
 
 /**
  * ID of SIO ports
@@ -19,6 +14,7 @@
 #define SIO_PORT_UART (1)
 #define SIO_PORT_BT   (2)
 #define SIO_PORT_LCD  (3)
+#define SIO_PORT_SPP_MASTER_TEST  (4)
 
 #define SERIAL_RCV_BUFSZ2 (4096 * 2)
 #define SERIAL_SND_BUFSZ2 (4096 * 2)
@@ -81,11 +77,6 @@ extern void sio_irdy_snd(intptr_t exinf);
  *  シリアルI/Oポートからの受信通知コールバック
  */
 extern void sio_irdy_rcv(intptr_t exinf);
-
-/**
- * Alarm handler to process Bluetooth incoming data
- */
-extern void bt_rcv_alm(intptr_t exinf);
 
 extern void bt_rcv_handler(const uint8_t *data, uint16_t size);
 

@@ -14,6 +14,7 @@
 #include "chip_config.h"
 #include "serial_mod.h"
 #include "kernel_cfg.h"
+#include "target_serial_dbsio.h"
 
 static intptr_t uart_opn_por(intptr_t);
 static intptr_t uart_cls_por(intptr_t);
@@ -41,6 +42,7 @@ typedef intptr_t (*func_t)(intptr_t);
 struct sio_port_control_block {
 //    ID        id;        // SIO Port ID
     intptr_t  exinf;     // 拡張情報
+    bool_t    isdbsio;
     bool_t    openflag;  // オープン済みフラグ
     func_t    opn_por;
     func_t    cls_por;
@@ -54,15 +56,16 @@ struct sio_port_control_block {
  *  シリアルI/Oポート管理ブロックのエリア
  */
 static SIOPCB siopcb_table[TNUM_PORT] = {
-    {(intptr_t)NULL, false, uart_opn_por, uart_cls_por, uart_snd_chr, uart_rcv_chr, uart_ena_cbr, uart_dis_cbr},
-    {(intptr_t)NULL, false, bt_opn_por, bt_cls_por, bt_snd_chr, bt_rcv_chr, bt_ena_cbr, bt_dis_cbr},
-	{(intptr_t)NULL, false, lcd_opn_por, lcd_cls_por, lcd_snd_chr, lcd_rcv_chr, lcd_ena_cbr, lcd_dis_cbr},
+    {(intptr_t)NULL, false, false, uart_opn_por, uart_cls_por, uart_snd_chr, uart_rcv_chr, uart_ena_cbr, uart_dis_cbr},
+    {(intptr_t)NULL, false, false, bt_opn_por, bt_cls_por, bt_snd_chr, bt_rcv_chr, bt_ena_cbr, bt_dis_cbr},
+	{(intptr_t)NULL, false, false, lcd_opn_por, lcd_cls_por, lcd_snd_chr, lcd_rcv_chr, lcd_ena_cbr, lcd_dis_cbr},
+    {(intptr_t)&dbsio_spp_master_test, true, false, NULL, NULL, NULL, NULL, NULL, NULL}, // SIO_PORT_TEST_SPP_MASTER
 };
 
-/* 
+/*
  *  シリアルI/OポートIDから割込み番号を取り出すためのマクロ
- */ 
-#define INDEX_SIOP(siopid)           ((uint_t)((siopid) - 1)) 
+ */
+#define INDEX_SIOP(siopid)           ((uint_t)((siopid) - 1))
 
 /*
  *  低レベル出力シリアルI/Oの初期化
@@ -80,76 +83,26 @@ SIOPCB *sio_opn_por(ID siopid, intptr_t exinf) {
     if (p_siopcb->openflag)
         return (p_siopcb);
 
-    p_siopcb->opn_por((intptr_t)NULL);
+    if (!p_siopcb->isdbsio) {
+        p_siopcb->opn_por((intptr_t)NULL);
+        p_siopcb->exinf = exinf;
+    } else {
+        // We use p_siopcb->exinf to store DBSIOCB
+        dbsio_opn_por((struct DBSIOCB*)p_siopcb->exinf, exinf);
+    }
 
-    p_siopcb->exinf = exinf;
     p_siopcb->openflag = true;
 
     return (p_siopcb);
 }
 
 void sio_cls_por(SIOPCB *p_siopcb) {
-    p_siopcb->cls_por((intptr_t)p_siopcb);
+    if (p_siopcb->isdbsio)
+        dbsio_cls_por((struct DBSIOCB*)p_siopcb->exinf);
+    else
+        p_siopcb->cls_por((intptr_t)p_siopcb);
+    p_siopcb->openflag = false;
 }
-
-///*
-// *  シリアルI/Oポートのオープン
-// */
-//SIOPCB *
-//sio_opn_por(ID siopid, intptr_t exinf)
-//{
-//	SIOPCB  *p_siopcb = &siopcb_table[INDEX_SIOP(siopid)];
-//	ER      ercd;
-//
-//    if(p_siopcb->openflag) {
-//        ercd = E_OK;
-//        return(p_siopcb);
-//    }
-//
-//	/*
-//	 *  シリアルI/O割込みをマスクする．
-//	 */
-//	ercd = dis_int(p_siopcb->intno);
-//	assert(ercd == E_OK);
-//
-//	/*
-//	 *  デバイス依存のオープン処理．
-//	 */
-//	uart_open(p_siopcb->p_uart);
-//
-//	p_siopcb->exinf = exinf;
-//	p_siopcb->openflag = true;
-//
-//	/*
-//	 *  シリアルI/O割込みのマスクを解除する．
-//	 */
-//	ercd = ena_int(p_siopcb->intno);
-//	assert(ercd == E_OK);
-//
-//	return(p_siopcb);
-//}
-
-///*
-// *  シリアルI/Oポートのクローズ
-// */
-//void
-//sio_cls_por(SIOPCB *p_siopcb)
-//{
-//	ER ercd;
-//
-//	/*
-//	 *  デバイス依存のクローズ処理．
-//	 */
-//	uart_close(p_siopcb->p_uart);
-//
-//	p_siopcb->openflag = false;
-//
-//	/*
-//	 *  シリアルI/O割込みをマスクする．
-//	 */
-//	ercd = dis_int(p_siopcb->intno);
-//	assert(ercd == E_OK);
-//}
 
 /*
  *  シリアルI/Oポートへの文字送信
@@ -157,7 +110,10 @@ void sio_cls_por(SIOPCB *p_siopcb) {
 bool_t
 sio_snd_chr(SIOPCB *siopcb, char c)
 {
-	return siopcb->snd_chr(c);
+    if (!siopcb->isdbsio)
+        return siopcb->snd_chr(c);
+    else
+        return dbsio_snd_chr((struct DBSIOCB*)siopcb->exinf, c);
 }
 
 /*
@@ -166,7 +122,10 @@ sio_snd_chr(SIOPCB *siopcb, char c)
 int_t
 sio_rcv_chr(SIOPCB *siopcb)
 {
-	return siopcb->rcv_chr((intptr_t)NULL);
+    if (!siopcb->isdbsio)
+        return siopcb->rcv_chr((intptr_t)NULL);
+    else
+        return dbsio_rcv_chr((struct DBSIOCB*)siopcb->exinf);
 }
 
 /*
@@ -175,15 +134,10 @@ sio_rcv_chr(SIOPCB *siopcb)
 void
 sio_ena_cbr(SIOPCB *siopcb, uint_t cbrtn)
 {
-    siopcb->ena_cbr(cbrtn);
-//	switch (cbrtn) {
-//	  case SIO_RDY_SND:
-//		uart_enable_send(siopcb->p_uart);
-//		break;
-//	  case SIO_RDY_RCV:
-//		uart_enable_recv(siopcb->p_uart);
-//		break;
-//	}
+    if (!siopcb->isdbsio)
+        siopcb->ena_cbr(cbrtn);
+    else
+        dbsio_ena_cbr((struct DBSIOCB*)siopcb->exinf, cbrtn);
 }
 
 /*
@@ -192,15 +146,10 @@ sio_ena_cbr(SIOPCB *siopcb, uint_t cbrtn)
 void
 sio_dis_cbr(SIOPCB *siopcb, uint_t cbrtn)
 {
-    siopcb->dis_cbr(cbrtn);
-//	switch (cbrtn) {
-//	  case SIO_RDY_SND:
-//		uart_disable_send(siopcb->p_uart);
-//		break;
-//	  case SIO_RDY_RCV:
-//		uart_disable_recv(siopcb->p_uart);
-//		break;
-//	}
+    if (!siopcb->isdbsio)
+        siopcb->dis_cbr(cbrtn);
+    else
+        dbsio_dis_cbr((struct DBSIOCB*)siopcb->exinf, cbrtn);
 }
 
 static SIOPCB* const uart_siopcb = &siopcb_table[INDEX_SIOP(SIO_PORT_UART)];
@@ -335,13 +284,11 @@ void uart_sio_isr(/*ID siopid*/intptr_t unused) {
  * SIO driver for Bluetooth
  */
 
-
 static SIOPCB*  bt_siopcb = &siopcb_table[INDEX_SIOP(SIO_PORT_BT)];
 static uint8_t  bt_send_buffer[2][BT_SND_BUF_SIZE]; // Double buffering
 static uint32_t bt_send_buffer_bytes[2] = {0, 0};
 static uint8_t  bt_send_buffer_idx = 0;             // Current send buffer in use
-const intptr_t *bt_siopcb_exinf_ptr = &(siopcb_table[INDEX_SIOP(SIO_PORT_BT)].exinf);
-static uint8_t  bt_recv_data_buf[2048];
+//static uint8_t  bt_recv_data_buf[2048];
 //static const uint8_t *bt_recv_data_buf;
 static uint16_t bt_recv_data_size = 0;
 
@@ -411,21 +358,6 @@ static intptr_t bt_dis_cbr(intptr_t cbrtn)
 		break;
 	}
     return true;
-}
-
-void bt_rcv_alm(intptr_t unused) {
-	// Consume the receive data buffer
-	assert(bt_rcv_cbr_ena); // TODO: Handle SIO rcv buffer full
-	for(uint16_t i = 0; i < bt_recv_data_size; ++i) {
-		bt_rcv_data = bt_recv_data_buf[i];
-		sio_irdy_rcv(bt_siopcb->exinf);
-	}
-	bt_rcv_data = -1;
-	bt_recv_data_size = 0;
-}
-
-void bt_snd_alm(intptr_t unused) {
-	sio_irdy_snd(bt_siopcb->exinf);
 }
 
 void bt_rcv_handler(const uint8_t *data, uint16_t size) {
@@ -507,4 +439,3 @@ static intptr_t lcd_snd_chr(intptr_t c) {
     lcd_console_send_character(c);
 	return true;
 }
-

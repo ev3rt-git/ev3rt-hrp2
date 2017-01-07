@@ -14,6 +14,7 @@
 #include "string.h"
 #include "minIni.h"
 #include "syssvc/serial.h"
+#include "target_serial_dbsio.h"
 
 //#define DEBUG
 //#define LOG_DEBUG LOG_ERROR
@@ -139,19 +140,57 @@ inline void btstack_runloop_sleep(uint32_t time) {
     tslp_tsk(time);
 }
 
-inline void rfcomm_channel_open_callback() {
+inline void rfcomm_channel_open_callback(int channel) {
 	/**
 	 * Open Bluetooth SIO port
 	 */
-    SVC_PERROR(serial_opn_por(SIO_PORT_BT));
-    SVC_PERROR(serial_ctl_por(SIO_PORT_BT, (IOCTL_NULL)));
+    switch(channel) {
+    case RFCOMM_CHANNEL_SPP_SERVER:
+        SVC_PERROR(serial_opn_por(SIO_PORT_BT));
+        SVC_PERROR(serial_ctl_por(SIO_PORT_BT, (IOCTL_NULL)));
+        break;
+    case RFCOMM_CHANNEL_SPP_MASTER_TEST:
+        SVC_PERROR(serial_opn_por(SIO_PORT_SPP_MASTER_TEST));
+        SVC_PERROR(serial_ctl_por(SIO_PORT_SPP_MASTER_TEST, (IOCTL_NULL)));
+        break;
+    default: assert(false);
+    };
 }
 
-inline void rfcomm_channel_close_callback() {
+inline void rfcomm_channel_close_callback(int channel) {
 	/**
 	 * Close Bluetooth SIO port
 	 */
-	SVC_PERROR(serial_cls_por(SIO_PORT_BT));
+    switch(channel) {
+    case RFCOMM_CHANNEL_SPP_SERVER:
+        SVC_PERROR(serial_cls_por(SIO_PORT_BT));
+        break;
+    case RFCOMM_CHANNEL_SPP_MASTER_TEST:
+        SVC_PERROR(serial_cls_por(SIO_PORT_SPP_MASTER_TEST));
+        break;
+    default: assert(false);
+    };
+
+}
+
+inline void rfcomm_channel_receive_callback(int channel, uint8_t *packet, uint16_t size) {
+    switch(channel) {
+    case RFCOMM_CHANNEL_SPP_MASTER_TEST:
+        dbsio_recv_fill(&dbsio_spp_master_test, packet, size);
+        break;
+    default: assert(false);
+    };
+}
+
+inline void rfcomm_channel_rdysend_callback(int channel, uint8_t **buffer, uint32_t *size) {
+    switch(channel) {
+    case RFCOMM_CHANNEL_SPP_MASTER_TEST: {
+        DBSIOBF* send_buffer = dbsio_next_send_buffer(&dbsio_spp_master_test);
+        *buffer = send_buffer->buffer;
+        *size   = send_buffer->bytes;
+        break; }
+    default: assert(false);
+    };
 }
 
 inline void btstack_db_lock() {
@@ -191,3 +230,12 @@ inline void btstack_db_append(const char *addr, const char *link_key) {
 #endif
 }
 
+/**
+ * Implementation of extended service calls
+ */
+
+ER _spp_master_test_connect(const uint8_t addr[6], const char *pin) {
+    if (!spp_master_test_start_connection(addr, pin)) return E_CTX;
+    while (spp_master_test_is_connecting()) dly_tsk(10);
+    return E_OK;
+}

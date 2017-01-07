@@ -129,7 +129,7 @@ sio_rdy_rcv(intptr_t exinf)
         /*
          *  バッファフルの場合，受信した文字を捨てる．
          */
-        syslog(LOG_EMERG, "BT SIO RCV BUF FULL!");
+        syslog(LOG_NOTICE, "BT SIO RCV BUF FULL!");
     }
     else {
         /*

@@ -20,7 +20,7 @@
 #include "kernel_cfg.h"
 #include "platform.h"
 
-#define TMIN_NORMAL_FD (SIO_BT_FILENO + 1)
+#define TMIN_NORMAL_FD (SIO_PORT_SPP_MASTER_TEST_FILENO + 1)
 #define TMAX_NORMAL_FD (TMIN_NORMAL_FD + TMAX_FD_NUM - 1)
 
 /**
@@ -73,6 +73,7 @@ static int alloc_normal_fd() {
 	return fd;
 }
 
+// TODO: use a map (array) instead of function to get PORT ID
 static inline
 ID
 get_portid(int fd) {
@@ -88,6 +89,9 @@ get_portid(int fd) {
 
 	case SIO_BT_FILENO:
 		return SIO_PORT_BT;
+
+	case SIO_PORT_SPP_MASTER_TEST_FILENO:
+		return SIO_PORT_SPP_MASTER_TEST;
 	}
 
 	return 0;
