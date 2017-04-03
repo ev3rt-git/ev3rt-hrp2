@@ -23,13 +23,13 @@ void ev3rt_console_start_app() {
 static void load_app(intptr_t unused) {
 	ER ercd;
 
-	on_display_fb = lcd_screen_fb;
+    ev3rt_console_set_visibility(false);
 	application_terminate_request();
 	application_terminate_wait();
 	platform_pause_application(true);
 	ercd = application_load_menu();
 	memset(lcd_screen_fb->pixels, 0, BITMAP_PIXELS_SIZE(lcd_screen_fb->width, lcd_screen_fb->height));
-	on_display_fb = ev3rt_console_fb;
+    ev3rt_console_set_visibility(true);
 	if (ercd == E_OK) {
 		ev3rt_console_start_app();
 	} else {
@@ -55,12 +55,19 @@ static void shutdown(intptr_t unused) {
 	ext_ker();
 }
 
+#if 0
+static void usbhost(intptr_t unused) {
+    act_tsk(USBHOST_TASK);
+}
+#endif
+
 static const MenuEntry entry_tab[] = {
 #if defined(BUILD_LOADER)
 	{ .title = "Load App", .handler = load_app },
 #else
 	{ .title = "Run App", .handler = run_app },
 #endif
+//	{ .title = "USB Host", .handler = usbhost },
 	{ .title = "Shutdown", .handler = shutdown },
 };
 

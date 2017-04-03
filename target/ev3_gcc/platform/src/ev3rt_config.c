@@ -14,6 +14,8 @@
 
 const char   *ev3rt_bluetooth_local_name;
 const char   *ev3rt_bluetooth_pin_code;
+const int    *ev3rt_bluetooth_pan_disabled;
+const char   *ev3rt_bluetooth_ip_address;
 const bool_t *ev3rt_sensor_port_1_disabled;
 const bool_t *ev3rt_usb_auto_terminate_app;
 int           DEBUG_UART;
@@ -46,6 +48,17 @@ void ev3rt_load_configuration() {
 	ini_gets("Bluetooth", "PinCode", "0000", pincode, 17, CFG_INI_FILE);
 	ini_puts("Bluetooth", "PinCode", pincode, CFG_INI_FILE);
 	ev3rt_bluetooth_pin_code = pincode;
+
+	static int disable_pan;
+	disable_pan = ini_getbool("Bluetooth", "DisablePAN", false, CFG_INI_FILE);
+	ini_putl("Bluetooth", "DisablePAN", disable_pan, CFG_INI_FILE);
+	ev3rt_bluetooth_pan_disabled = &disable_pan;
+
+    // TODO: check valid IP address
+	static char ip_address[16];
+	ini_gets("Bluetooth", "IPAddress", "10.0.10.1", ip_address, 17, CFG_INI_FILE);
+	ini_puts("Bluetooth", "IPAddress", ip_address, CFG_INI_FILE);
+	ev3rt_bluetooth_ip_address = ip_address;
 
 	static bool_t disable_port_1;
 	disable_port_1 = ini_getbool("Sensors", "DisablePort1", false, CFG_INI_FILE);

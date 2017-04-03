@@ -161,6 +161,38 @@ trace_rea_log(TRACE *p_trace)
 	return(ercd);
 }
 
+ER
+trace_rea_log_reverse(TRACE *p_trace)
+{
+	ER_UINT	ercd;
+	SIL_PRE_LOC;
+
+	SIL_LOC_INT();
+
+	/*
+	 *  トレースログバッファからの取出し
+	 */
+	if (trace_count > 0U) {
+		uint_t last = trace_head + trace_count - 1;
+		if (last >= TCNT_TRACE_BUFFER) last -= TCNT_TRACE_BUFFER;
+		*p_trace = trace_buffer[last];
+		trace_count--;
+#if 0
+		trace_head++;
+		if (trace_head >= TCNT_TRACE_BUFFER) {
+			trace_head = 0U;
+		}
+#endif
+		ercd = E_OK;
+	}
+	else {
+		ercd = E_OBJ;
+	}
+
+	SIL_UNL_INT();
+	return(ercd);
+}
+
 /*
  *  トレースログを出力するためのライブラリ関数
  */

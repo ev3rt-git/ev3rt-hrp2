@@ -23,6 +23,7 @@
 #include "sound_dri.h"
 #include "bluetooth_dri.h"
 #include "usbmsc_dri.h"
+#include "mbed_dri.h"
 #include "event_manager.h"
 #include "button_event_trigger.h"
 #include "platform.h"

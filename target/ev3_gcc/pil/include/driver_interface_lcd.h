@@ -90,7 +90,7 @@ static void bitmap_bitblt(const bitmap_t *src, int sx, int sy, bitmap_t *dst, in
 	                    !bitmap_get_pixel(src, sx + rel_x, sy + rel_y));
 	        	break;
 	        default:
-	            syslog(LOG_ERROR, "%s(): ROP code 0x%08x not supported.", __FUNCTION__, rop);
+	            //syslog(LOG_ERROR, "%s(): ROP code 0x%08x not supported.", __FUNCTION__, rop);
 	            return;
 	        }
 	    }

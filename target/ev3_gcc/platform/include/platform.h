@@ -18,6 +18,8 @@ void platform_pause_application();
  */
 extern const char   *ev3rt_bluetooth_local_name;   //!< Name for service discovery
 extern const char   *ev3rt_bluetooth_pin_code;     //!< Pin code for authentication, up to 16 bytes + '\0'
+extern const int    *ev3rt_bluetooth_pan_disabled; //!< True: Disable Bluetooth PAN support, might improve real-time performance slightly
+extern const char   *ev3rt_bluetooth_ip_address;   //!< IP address of EV3 brick when using Bluetooth PAN
 extern const bool_t *ev3rt_sensor_port_1_disabled; //!< True: use port 1 as a serial port, False: use port 1 as a normal sensor port
 extern const bool_t *ev3rt_usb_auto_terminate_app; //!< True: Terminate application automatically if USB is connected
 

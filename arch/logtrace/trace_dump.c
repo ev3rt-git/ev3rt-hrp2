@@ -152,3 +152,17 @@ trace_dump(intptr_t exinf)
 		trace_print(&trace, putc);
 	}
 }
+
+void
+trace_dump_reverse(intptr_t exinf)
+{
+extern ER
+trace_rea_log_reverse(TRACE *p_trace);
+	TRACE	trace;
+	void	(*putc)(char);
+
+	putc = (void (*)(char)) exinf;
+	while (trace_rea_log_reverse(&trace) >= 0) {
+		trace_print(&trace, putc);
+	}
+}
