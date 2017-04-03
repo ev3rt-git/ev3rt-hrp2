@@ -28,6 +28,7 @@ include $(TARGETDIR)/drivers/soc/Makefile
 include $(TARGETDIR)/drivers/sound/Makefile
 include $(TARGETDIR)/drivers/motor/Makefile
 include $(TARGETDIR)/drivers/usbmsc/Makefile
+include $(TARGETDIR)/drivers/mbed/Makefile
 include $(TARGETDIR)/pil/Makefile
 include $(TARGETDIR)/platform/Makefile
 

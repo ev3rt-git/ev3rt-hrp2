@@ -17,6 +17,8 @@
 #include <t_syslog.h>
 #include "gui.h"
 #include "csl.h"
+#include "mbed-interface.h"
+#include "apploader.h"
 
 static bool_t load_success;
 
@@ -246,10 +248,65 @@ void test_serial_loader(intptr_t portid) {
 	}
 }
 
+static
+void test_bluetooth_pan_loader(intptr_t portid) {
+    const char *file_name;
+    uint32_t    file_size;
+
+	/**
+	 * Draw GUI
+	 */
+	font_t *font = global_brick_info.font_w10h16;
+	bitmap_t *screen = global_brick_info.lcd_screen;
+	int offset_y = 0;
+	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, font->height * 2, ROP_CLEAR); // Clear
+	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, font->height, ROP_SET); // Clear
+	bitmap_draw_string("Receive App File", screen, (screen->width - strlen("Receive App File") * font->width) / 2, offset_y, font, ROP_COPYINVERTED);
+	offset_y += font->height * 2;
+	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, screen->height, ROP_CLEAR); // Clear
+	bitmap_draw_string("BT PAN IP Addr.:", screen, 0, offset_y, font, ROP_COPY);
+	offset_y += font->height * 2;
+	bitmap_draw_string(ev3rt_bluetooth_ip_address, screen, 0, offset_y, font, ROP_COPY);
+	offset_y += font->height * 2;
+//    syslog(LOG_NOTICE, "%s", cm->title);
+
+
+	platform_pause_application(false); // Ensure the priority of Bluetooth task
+
+    httpd_receive_file_start(app_binary_buf, TMAX_APP_BINARY_SIZE);
+    while(!global_brick_info.button_pressed[BRICK_BUTTON_BACK]) {
+        tslp_tsk(100);
+        if (http_receive_file_poll(&file_name, &file_size)) { // File received
+            syslog(LOG_NOTICE, "File '%s' (%lu bytes) is received.", file_name, file_size);
+            if (strcmp("", file_name) == 0) { // uImage received
+                apploader_store_file("/uImage", app_binary_buf, file_size);
+	            show_message_box("uImage Received", "Please restart  EV3 to use it.");
+            } else { // User application received
+    	        static char filepath[1024/* TODO: check length? */];
+    	        strcpy(filepath, "/ev3rt/apps"/*SD_APP_FOLDER*/);
+    	        strcat(filepath, "/");
+    	        strcat(filepath, file_name);
+                apploader_store_file(filepath, app_binary_buf, file_size);
+	            show_message_box("App Received", "Click the CENTER button to run.");
+                if (!load_application(app_binary_buf, file_size) == E_OK) break; // goto cancel
+                load_success = true;
+            }
+            return;
+        }
+    }
+
+    // Cancel
+    while(global_brick_info.button_pressed[BRICK_BUTTON_BACK]);
+    httpd_receive_file_start(NULL, 0);
+	show_message_box("Error", "Failed to load application.");
+}
+
+
 static const CliMenuEntry entry_tab[] = {
 	{ .key = '1', .title = "SD card", .handler = test_sd_loader },
-	{ .key = '2', .title = "Bluetooth", .handler = test_serial_loader, .exinf = SIO_PORT_BT },
-	{ .key = '3', .title = "Serial port 1", .handler = test_serial_loader, .exinf = SIO_PORT_UART  },
+	{ .key = '2', .title = "Bluetooth PAN", .handler = test_bluetooth_pan_loader },
+	{ .key = '3', .title = "Bluetooth SPP", .handler = test_serial_loader, .exinf = SIO_PORT_BT },
+//	{ .key = '3', .title = "Serial port 1", .handler = test_serial_loader, .exinf = SIO_PORT_UART  },
 //	{ .key = 'D', .title = "Download Application", },
 	{ .key = 'Q', .title = "Exit to console", .handler = NULL },
 };

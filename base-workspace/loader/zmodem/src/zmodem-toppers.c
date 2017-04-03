@@ -169,6 +169,20 @@ static int memfile_close(void *c) {
 #include "platform_interface_layer.h"
 #include "driver_common.h"
 
+void apploader_store_file(const char *filepath, void *buffer, uint32_t size) {
+   // Open
+   static FIL fil;
+   FRESULT res = f_open(&fil, filepath, FA_WRITE|FA_CREATE_ALWAYS);
+   assert(res == FR_OK);
+   // Write
+   UINT bw;
+   res = f_write(&fil, buffer, size, &bw);
+   assert(bw == size);
+   assert(res == FR_OK);
+   res = f_close(&fil);
+   assert(res == FR_OK);
+}
+
 void zmodem_recv_task(intptr_t unused) {
 	int file_bytes; //, ftime, total_files, total_bytes;
 	int i;
@@ -266,14 +280,15 @@ ER zmodem_recv_file(ID portid, void *buf, SIZE size, SIZE *filesz) {
 	font_t *font = global_brick_info.font_w10h16;
 	bitmap_t *screen = global_brick_info.lcd_screen;
 	offset_y = 0;
+	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, font->height * 2, ROP_CLEAR); // Clear
 	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, font->height, ROP_SET); // Clear
 	bitmap_draw_string("Receive App File", screen, (screen->width - strlen("Receive App File") * font->width) / 2, offset_y, font, ROP_COPYINVERTED);
-	offset_y += font->height;
+	offset_y += font->height * 2;
 	bitmap_bitblt(NULL, 0, 0, screen, 0, offset_y, screen->width, screen->height, ROP_CLEAR); // Clear
 	bitmap_draw_string(portid == SIO_PORT_BT ? "Port: Bluetooth" : "Port: Port 1", screen, 0, offset_y, font, ROP_COPY);
-	offset_y += font->height;
+	offset_y += font->height * 2;
 	bitmap_draw_string("Protocol: ZMODEM", screen, 0, offset_y, font, ROP_COPY);
-	offset_y += font->height;
+	offset_y += font->height * 2;
 //    syslog(LOG_NOTICE, "%s", cm->title);
 
 	/**
@@ -332,17 +347,7 @@ ER zmodem_recv_file(ID portid, void *buf, SIZE size, SIZE *filesz) {
     	strcpy(filepath, "/ev3rt/apps"/*SD_APP_FOLDER*/);
     	strcat(filepath, "/");
     	strcat(filepath, recv_file_name);
-    	// Open
-    	static FIL fil;
-    	FRESULT res = f_open(&fil, filepath, FA_WRITE|FA_CREATE_ALWAYS);
-    	assert(res == FR_OK);
-    	// Write
-    	UINT bw;
-    	res = f_write(&fil, buf, *filesz, &bw);
-    	assert(bw == *filesz);
-    	assert(res == FR_OK);
-    	res = f_close(&fil);
-    	assert(res == FR_OK);
+        apploader_store_file(filepath, buf, *filesz);
     }
 
 	return recv_ercd;
