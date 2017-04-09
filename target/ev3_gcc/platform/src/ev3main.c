@@ -89,12 +89,16 @@ void ev3_main_task(intptr_t exinf) {
 	platform_soft_reset();
 
 	// Banner
+    static char version_banner[] = "===========================<=";
+    char *ptr_version = version_banner + sizeof(version_banner) - strlen(CSL_VERSION_STRING) - 4;
+    ptr_version[0] = '>';
+    memcpy(ptr_version + 1, CSL_VERSION_STRING, strlen(CSL_VERSION_STRING));
 	syslog(LOG_NOTICE, "   _____   ______ ___  ______");
 	syslog(LOG_NOTICE, "  / __/ | / /_  // _ \\/_  __/");
 	syslog(LOG_NOTICE, " / _/ | |/ //_ </ , _/ / /");
 	syslog(LOG_NOTICE, "/___/ |___/____/_/|_| /_/");
 	syslog(LOG_NOTICE, " ");
-	syslog(LOG_NOTICE, "==============>Beta-6-3-git<=");
+	syslog(LOG_NOTICE, "%s", version_banner);
 	syslog(LOG_NOTICE, " ");
 	syslog(LOG_NOTICE, "Powered by TOPPERS/HRP2 RTOS");
 	syslog(LOG_NOTICE, "Initialization is completed..");

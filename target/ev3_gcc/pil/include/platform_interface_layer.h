@@ -7,8 +7,9 @@
 
 #pragma once
 
-#define PIL_VERSION (5U)
-#define PIL_VERSION_STRING "Beta 6-2"
+#define PIL_VERSION (6U)
+#define PIL_VERSION_STRING "Beta 7"     // Minimum supported PIL version for user applications
+#define CSL_VERSION_STRING "Beta 7 GIT" // Current version of EV3RT (a.k.a Core Service Layer Version)
 
 #include "driver_interface_lcd.h"
 #include "driver_interface_brick.h"
