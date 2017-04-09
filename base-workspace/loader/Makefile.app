@@ -131,6 +131,7 @@ TARGETDIR = $(SRCDIR)/target/$(TARGET)
 #
 #  ターゲット依存の定義のインクルード
 #
+BUILD_LOADER := 1
 include $(TARGETDIR)/Makefile.ev3
 
 #

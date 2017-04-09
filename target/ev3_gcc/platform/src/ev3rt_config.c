@@ -50,8 +50,12 @@ void ev3rt_load_configuration() {
 	ev3rt_bluetooth_pin_code = pincode;
 
 	static int disable_pan;
+#if !defined(BUILD_LOADER) // TODO: Bluetooth PAN is only supported by loader currently
+    disable_pan = 1;
+#else
 	disable_pan = ini_getbool("Bluetooth", "DisablePAN", false, CFG_INI_FILE);
 	ini_putl("Bluetooth", "DisablePAN", disable_pan, CFG_INI_FILE);
+#endif
 	ev3rt_bluetooth_pan_disabled = &disable_pan;
 
     // TODO: check valid IP address
@@ -72,4 +76,8 @@ void ev3rt_load_configuration() {
 	ini_putl("USB", "AutoTerminateApp", auto_term_app, CFG_INI_FILE);
 	ev3rt_usb_auto_terminate_app = &auto_term_app;
 }
+
+#if !defined(BUILD_LOADER)
+void bnep_channel_receive_callback(uint8_t *packet, uint16_t size) {}
+#endif
 
