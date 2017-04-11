@@ -34,6 +34,7 @@ $END$
 $
 $ Generate '_module_csem_tab' and update '_module_cfg_tab'
 $
+$IF LENGTH(SEM.ID_LIST)$
 $FILE "module_cfg.c"$
 $index = 0$
 static const T_CSEM _module_csem_tab[$LENGTH(SEM.ID_LIST)$] = {$NL$
@@ -46,4 +47,5 @@ $FOREACH id SEM.ID_LIST$
     $index = index + 1$
 $END$
 };$NL$
+$END$
 

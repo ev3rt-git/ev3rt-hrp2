@@ -34,6 +34,7 @@ $END$
 $
 $ Generate '_module_cflg_tab' and update '_module_cfg_tab'
 $
+$IF LENGTH(FLG.ID_LIST)$
 $FILE "module_cfg.c"$
 $index = 0$
 static const T_CFLG _module_cflg_tab[$LENGTH(FLG.ID_LIST)$] = {$NL$
@@ -46,4 +47,5 @@ $FOREACH id FLG.ID_LIST$
     $index = index + 1$
 $END$
 };$NL$
+$END$
 

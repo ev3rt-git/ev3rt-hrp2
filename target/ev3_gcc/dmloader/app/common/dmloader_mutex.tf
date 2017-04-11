@@ -56,6 +56,7 @@ $END$
 $
 $ Generate '_module_cmtx_tab' and update '_module_cfg_tab'
 $
+$IF LENGTH(MTX.ID_LIST)$
 $FILE "module_cfg.c"$
 $index = 0$
 static const T_CMTX _module_cmtx_tab[$LENGTH(MTX.ID_LIST)$] = {$NL$
@@ -68,4 +69,5 @@ $FOREACH id MTX.ID_LIST$
     $index = index + 1$
 $END$
 };$NL$
+$END$
 

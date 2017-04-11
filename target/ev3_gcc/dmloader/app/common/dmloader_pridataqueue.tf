@@ -65,6 +65,7 @@ $END$
 $
 $ Generate '_module_cpdq_tab' and update '_module_cfg_tab'
 $
+$IF LENGTH(PDQ.ID_LIST)$
 $FILE "module_cfg.c"$
 $index = 0$
 static const T_CPDQ _module_cpdq_tab[$LENGTH(PDQ.ID_LIST)$] = {$NL$
@@ -77,4 +78,5 @@ $FOREACH id PDQ.ID_LIST$
     $index = index + 1$
 $END$
 };$NL$
+$END$
 
