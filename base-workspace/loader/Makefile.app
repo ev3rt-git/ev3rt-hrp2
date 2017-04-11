@@ -370,6 +370,7 @@ kernel_cfg.timestamp: $(APPL_CFG) \
 #
 ifdef USE_CFG_PASS3
 kernel_mem3.c: $(APPL_CFG) kernel_cfg.timestamp $(ALL2_OBJS) $(LIBS_DEP)
+	$(call print_cmd, "LINK", $(CFG2_OUT))
 	$(LINK) $(CFLAGS) $(CFG2_OUT_LDFLAGS) -o $(CFG2_OUT) $(START_OBJS) \
 			$(APPL_OBJS) $(SYSSVC_OBJS) $(CFG2_OBJS) $(ALL_LIBS) $(END_OBJS)
 	$(NM) -n $(CFG2_OUT) > cfg2_out.syms
