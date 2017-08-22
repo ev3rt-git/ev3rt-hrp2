@@ -22,6 +22,7 @@ extern const int    *ev3rt_bluetooth_pan_disabled; //!< True: Disable Bluetooth 
 extern const char   *ev3rt_bluetooth_ip_address;   //!< IP address of EV3 brick when using Bluetooth PAN
 extern const bool_t *ev3rt_sensor_port_1_disabled; //!< True: use port 1 as a serial port, False: use port 1 as a normal sensor port
 extern const bool_t *ev3rt_usb_auto_terminate_app; //!< True: Terminate application automatically if USB is connected
+extern const bool_t *ev3rt_low_battery_warning;    //!< True: warn if battery voltage is low
 
 extern int           DEBUG_UART;                   //!< UART used for debug in Linux drivers (0 = port1, 1 = port2, ... 4 = none)
 
@@ -31,6 +32,11 @@ extern int           DEBUG_UART;                   //!< UART used for debug in L
 extern void ev3_main_task(intptr_t exinf);
 extern void platform_busy_task(intptr_t exinf);
 extern void ev3rt_logtask(intptr_t exinf);
+
+/**
+ * Cyclic handlers
+ */
+extern void ev3_battery_monitor_cyc(intptr_t);
 
 /**
  * Exceptions

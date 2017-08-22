@@ -50,6 +50,27 @@ int adc_count_to_mv(int count) {
 	return count * ADC_REF / ADC_RES;
 }
 
+
+/**
+ * Battery info from ADC values
+ */
+
+#define AMP_CIN   (22.0f) // Constant from 'c_ui.c'
+#define SHUNT_IN  (0.11f) // Constant from 'c_ui.c'
+#define VCE       (0.05f) // Constant from 'c_ui.c'
+#define AMP_VIN   (0.5f)  // Constant from 'c_ui.c'
+
+static inline
+int adc_count_to_battery_current_mA(int count) {
+	return adc_count_to_mv(count) / (AMP_CIN * SHUNT_IN);
+}
+
+static inline
+int adc_count_to_battery_voltage_mV(int current_count, int voltage_count) {
+	int C_in_mV = adc_count_to_mv(current_count) / AMP_CIN;
+	return adc_count_to_mv(voltage_count) / AMP_VIN + C_in_mV + VCE * 1000;
+}
+
 /**
  * Definitions of analog sensor.
  */

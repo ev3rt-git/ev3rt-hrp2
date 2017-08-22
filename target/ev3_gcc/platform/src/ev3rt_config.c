@@ -18,6 +18,7 @@ const int    *ev3rt_bluetooth_pan_disabled;
 const char   *ev3rt_bluetooth_ip_address;
 const bool_t *ev3rt_sensor_port_1_disabled;
 const bool_t *ev3rt_usb_auto_terminate_app;
+const bool_t *ev3rt_low_battery_warning;
 int           DEBUG_UART;
 int           SIO_PORT_DEFAULT;
 
@@ -38,6 +39,11 @@ void ev3rt_load_configuration() {
         SIO_PORT_DEFAULT = SIO_PORT_LCD;
 	    ini_puts("Debug", "DefaultPort", "LCD", CFG_INI_FILE);
     }
+
+	static bool_t low_battery_warning;
+	low_battery_warning = ini_getbool("Debug", "LowBatteryWarning", true, CFG_INI_FILE);
+	ini_putl("Debug", "LowBatteryWarning", low_battery_warning, CFG_INI_FILE);
+	ev3rt_low_battery_warning = &low_battery_warning;
 
 	static char localname[100];
 	ini_gets("Bluetooth", "LocalName", "Mindstorms EV3", localname, 100, CFG_INI_FILE);

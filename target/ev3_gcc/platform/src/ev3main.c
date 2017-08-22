@@ -112,80 +112,8 @@ void ev3_main_task(intptr_t exinf) {
 
 	brick_misc_command(MISCCMD_SET_LED, TA_LED_GREEN);
 
-#if 0 // Legacy code
-    initialize_analog_dri();
-    initialize_uart_dri();
-	initialize_motor_dri();
-	initialize_sound_dri();
-	initialize_fatfs_dri();
-	//    initialize_ev3();
-
-
-
-//    syslog(LOG_ERROR, "TEST ZMODEM");
-//    uint8_t c;
-//    while(1) {
-//    	serial_rea_dat(SIO_PORT_UART, &c, 1);
-//		ER ercd;
-//		switch (c) {
-//		case 'r':
-//			ercd = zmodem_recv_file(app_text_mempool, sizeof(app_text_mempool));
-//			syslog(LOG_ERROR, "ZMODEM ercd = %d.", ercd);
-//			break;
-//		default:
-//			syslog(LOG_ERROR, "Key %c pressed.", c);
-//		}
-//    }
-
-
-    //EV3::ev3 = new EV3::EV3();
-
-//#define TEST_ANALOG_SENSOR
-//
-
-//#ifdef TEST_ANALOG_SENSOR
-
-//    while(1) {
-//        /*
-//         *  Debug Analog Port 2
-//         */
-//        int sv = analog_get_short(1);
-//        printk("Sensor PIN1: %d\n", sv);
-//        printk("Sensor PIN6: %d\n", analog_get_short_pin6(1));
-//
-//        GPIO67.OUT_DATA ^= GPIO_ED_PIN7 | GPIO_ED_PIN14;
-//        target_fput_log('H');
-//        target_fput_log('E');
-//        target_fput_log('R');
-//        target_fput_log('E');
-//        target_fput_log('\n');
-//        tslp_tsk(1000);
-//    }
-//#endif
-//#ifdef TEST_UART
-//  //init_pwm();
-//  //ev3_motor_set_speed(PortA, 50);
-//  //tslp_tsk(3000);
-//  //ev3_motor_brake(PortA, true);
-//  init_uart();
-//  while(1) {
-//      /*
-//       *  Debug UART Port 2
-//       */
-//      int sv = uart_get_short(1);
-//      printk("Sensor value: %d\n", sv);
-//
-//      GPIO67.OUT_DATA ^= GPIO_ED_PIN7 | GPIO_ED_PIN14;
-//      target_fput_log('H');
-//      target_fput_log('E');
-//      target_fput_log('R');
-//      target_fput_log('E');
-//      target_fput_log('\n');
-//      tslp_tsk(1000);
-//  }
-//#endif
-#endif
-
+    if (*ev3rt_low_battery_warning)
+        sta_cyc(EV3_BATTERY_MONITOR_CYC);
 }
 
 ER platform_register_driver(const ev3_driver_t *p_driver) {
@@ -243,3 +171,14 @@ void ev3rt_logtask(intptr_t unused) {
     logtask_main(SIO_PORT_DEFAULT);
 }
 
+void ev3_battery_monitor_cyc(intptr_t unused) {
+    // WARNING: BATT_INDICATOR_LOW / ACCU_INDICATOR_LOW
+    // SHUTDOWN:BATT_SHUTDOWN_LOW  / ACCU_SHUTDOWN_LOW
+    uint32_t bat_mv = adc_count_to_battery_voltage_mV(*global_brick_info.battery_current, *global_brick_info.battery_voltage);
+    if (bat_mv <= ACCU_INDICATOR_LOW) {
+	    brick_misc_command(MISCCMD_SET_LED, TA_LED_RED);
+	    syslog(LOG_NOTICE, "-----------------------------");
+	    syslog(LOG_NOTICE, "| WARN: LOW BATTERY @ %d.%d V |", bat_mv / 1000, (bat_mv / 100) % 10);
+	    syslog(LOG_NOTICE, "-----------------------------");
+    }
+}
