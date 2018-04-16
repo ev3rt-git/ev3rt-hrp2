@@ -53,13 +53,16 @@ SECTIONS
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } : text
+
+    . = ALIGN(4);
+
+    __exidx_start = .;
     .ARM.exidx :
     {
-        . = ALIGN(4);
-        __exidx_start = .;
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-        __exidx_end = .;
     } : text
+    __exidx_end = .;
+
     .rel.plt :
     {
      __dummy_rel_plt = .;

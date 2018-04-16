@@ -108,8 +108,9 @@ enum SectionType {
 };
 
 enum SegmentType {
-    PT_NULL = 0,
-    PT_LOAD = 1
+    PT_NULL      = 0x00000000,
+    PT_LOAD      = 0x00000001,
+    PT_ARM_EXIDX = 0x70000001
 };
 
 enum SegmentPermission {
@@ -274,7 +275,7 @@ ER elf32_load(const void *elf32_data, uint32_t elf32_data_sz, elf32_ldctx_t *ctx
         const Elf32_Phdr *phdr = ELF32_PHDR(ehdr, i);
 
         // Skip if not PT_LOAD segment
-        if(phdr->p_type == PT_NULL) continue;
+        if(phdr->p_type == PT_NULL || phdr->p_type == PT_ARM_EXIDX) continue;
         if(phdr->p_type != PT_LOAD) {
             syslog(LOG_WARNING, "%s(): Unsupported segment type %d.", __FUNCTION__, phdr->p_type);
             continue;
