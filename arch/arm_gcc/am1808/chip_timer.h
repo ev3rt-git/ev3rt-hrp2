@@ -20,10 +20,6 @@
 //#define INHNO_TIMER     T64P0_TINT12 /* 割込みハンドラ番号 */
 #define INTNO_TIMER     T64P0_TINT12 /* 割込み番号 */
 
-#ifndef INTPRI_TIMER
-#define INTPRI_TIMER    (TMIN_INTPRI + 2)            /* 割込み優先度 */
-#endif /* INTPRI_TIMER */
-
 #define INTATR_TIMER    0U            /* 割込み属性 */
 
 #ifdef TOPPERS_TARGET_SUPPORT_OVRHDR

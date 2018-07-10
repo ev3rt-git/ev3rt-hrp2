@@ -19,7 +19,7 @@
 /*
  *  デフォルトの非タスクコンテキスト用のスタック領域の定義
  */
-#define DEFAULT_ISTKSZ  0x4000U /* 16Kbyte */
+#define DEFAULT_ISTKSZ  0x10000U /* 64Kbyte */
 
 /*
  *  Priority = Channel + CHN_TO_PRI_OFFSET
