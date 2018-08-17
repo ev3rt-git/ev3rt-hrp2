@@ -12,6 +12,7 @@
 
 #define CFG_INI_FILE  ("/ev3rt/etc/rc.conf.ini")
 
+const bool_t *ev3rt_bluetooth_disabled;
 const char   *ev3rt_bluetooth_local_name;
 const char   *ev3rt_bluetooth_pin_code;
 const int    *ev3rt_bluetooth_pan_disabled;
@@ -44,6 +45,11 @@ void ev3rt_load_configuration() {
 	low_battery_warning = ini_getbool("Debug", "LowBatteryWarning", true, CFG_INI_FILE);
 	ini_putl("Debug", "LowBatteryWarning", low_battery_warning, CFG_INI_FILE);
 	ev3rt_low_battery_warning = &low_battery_warning;
+
+	static bool_t disable_bluetooth;
+	disable_bluetooth = ini_getbool("Bluetooth", "TurnOff", false, CFG_INI_FILE);
+	ini_putl("Bluetooth", "TurnOff", disable_bluetooth, CFG_INI_FILE);
+    ev3rt_bluetooth_disabled = &disable_bluetooth;
 
 	static char localname[100];
 	ini_gets("Bluetooth", "LocalName", "Mindstorms EV3", localname, 100, CFG_INI_FILE);

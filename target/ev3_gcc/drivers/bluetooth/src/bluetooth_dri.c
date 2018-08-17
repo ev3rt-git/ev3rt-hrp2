@@ -77,6 +77,11 @@ int import_bt_key(const mTCHAR *Section, const mTCHAR *Key, const mTCHAR *Value,
 }
 
 static void initialize(intptr_t unused) {
+    if (*ev3rt_bluetooth_disabled) {
+        gpio_direction_output(BT_SHUTDOWN_PIN, 0);
+        return;
+    }
+
     hardware_initialize();
     extern void btstack_memory_init(); // TODO: extern from BTstack module
 	btstack_memory_init();

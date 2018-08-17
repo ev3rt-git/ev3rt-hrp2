@@ -101,7 +101,11 @@ void ev3_main_task(intptr_t exinf) {
 	syslog(LOG_NOTICE, "%s", version_banner);
 	syslog(LOG_NOTICE, " ");
 	syslog(LOG_NOTICE, "Powered by TOPPERS/HRP2 RTOS");
-	syslog(LOG_NOTICE, "Initialization is completed..");
+	syslog(LOG_NOTICE, "Initialization is completed.");
+
+    if (*ev3rt_bluetooth_disabled) {
+	    syslog(LOG_NOTICE, "Bluetooth is turned off.");
+    }
 
     // Pause the application when using standalone mode
 #if !defined(BUILD_LOADER)
