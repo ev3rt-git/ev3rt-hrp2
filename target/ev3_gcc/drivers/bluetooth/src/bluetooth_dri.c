@@ -15,6 +15,7 @@
 #include "minIni.h"
 #include "syssvc/serial.h"
 #include "target_serial_dbsio.h"
+#include <stdarg.h>
 
 //#define DEBUG
 //#define LOG_DEBUG LOG_ERROR
@@ -233,6 +234,71 @@ inline void btstack_db_append(const char *addr, const char *link_key) {
         get_tim(&tim2);
         syslog(LOG_NOTICE, "%s(addr%c=NULL) costs %d ms", __FUNCTION__, (addr ? '!' : '='), tim2 - tim1);
 #endif
+}
+
+void
+btstack_printf(const char *format, ...)
+{
+    uint_t prio = LOG_ERROR;
+
+	SYSLOG	logbuf;
+	va_list	ap;
+	uint_t	i;
+	char	c;
+	bool_t	lflag;
+	ER		ercd;
+
+	logbuf.logtype = LOG_TYPE_COMMENT;
+	logbuf.loginfo[0] = (intptr_t) format;
+	i = 1U;
+	va_start(ap, format);
+
+	while ((c = *format++) != '\0' && i < TMAX_LOGINFO) {
+		if (c != '%') {
+			continue;
+		}
+
+		lflag = false;
+		c = *format++;
+		while ('0' <= c && c <= '9') {
+			c = *format++;
+		}
+		if (c == 'l') {
+			lflag = true;
+			c = *format++;
+		}
+		switch (c) {
+		case 'd':
+			logbuf.loginfo[i++] = lflag ? (intptr_t) va_arg(ap, long_t)
+										: (intptr_t) va_arg(ap, int_t);
+			break;
+		case 'u':
+		case 'x':
+		case 'X':
+			logbuf.loginfo[i++] = lflag ? (intptr_t) va_arg(ap, ulong_t)
+										: (intptr_t) va_arg(ap, uint_t);
+			break;
+		case 'p':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, void *);
+			break;
+		case 'c':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, int);
+			break;
+		case 's':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, const char *);
+			break;
+		case '\0':
+			format--;
+			break;
+		default:
+			break;
+		}
+	}
+	va_end(ap);
+	ercd = syslog_wri_log(prio, &logbuf);
+	if (ercd < 0) {
+		(void) syslog_fwri_log(ercd, &logbuf);
+	}
 }
 
 /**
