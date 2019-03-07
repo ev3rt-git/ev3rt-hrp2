@@ -17,6 +17,7 @@
 #if defined(BUILD_LOADER)
 #include "apploader.h"
 #endif
+#include <stdarg.h>
 
 // From 'usbmsc_media_functions.c'
 extern const tMSCDMedia usbmsc_media_functions_mmcsd;
@@ -100,3 +101,67 @@ void delay(unsigned int milliSec) {
     ER ercd = dly_tsk(milliSec);
     assert(ercd == E_OK);
 }
+
+void
+usblib_syslog(unsigned int prio, const char *format, ...)
+{
+	SYSLOG	logbuf;
+	va_list	ap;
+	uint_t	i;
+	char	c;
+	bool_t	lflag;
+	ER		ercd;
+
+	logbuf.logtype = LOG_TYPE_COMMENT;
+	logbuf.loginfo[0] = (intptr_t) format;
+	i = 1U;
+	va_start(ap, format);
+
+	while ((c = *format++) != '\0' && i < TMAX_LOGINFO) {
+		if (c != '%') {
+			continue;
+		}
+
+		lflag = false;
+		c = *format++;
+		while ('0' <= c && c <= '9') {
+			c = *format++;
+		}
+		if (c == 'l') {
+			lflag = true;
+			c = *format++;
+		}
+		switch (c) {
+		case 'd':
+			logbuf.loginfo[i++] = lflag ? (intptr_t) va_arg(ap, long_t)
+										: (intptr_t) va_arg(ap, int_t);
+			break;
+		case 'u':
+		case 'x':
+		case 'X':
+			logbuf.loginfo[i++] = lflag ? (intptr_t) va_arg(ap, ulong_t)
+										: (intptr_t) va_arg(ap, uint_t);
+			break;
+		case 'p':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, void *);
+			break;
+		case 'c':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, int);
+			break;
+		case 's':
+			logbuf.loginfo[i++] = (intptr_t) va_arg(ap, const char *);
+			break;
+		case '\0':
+			format--;
+			break;
+		default:
+			break;
+		}
+	}
+	va_end(ap);
+	ercd = syslog_wri_log(prio, &logbuf);
+	if (ercd < 0) {
+		(void) syslog_fwri_log(ercd, &logbuf);
+	}
+}
+
