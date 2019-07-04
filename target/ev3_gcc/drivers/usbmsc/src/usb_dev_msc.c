@@ -62,6 +62,8 @@ unsigned int g_bufferIndex = 0;
 // From 'usbmsc_media_functions.c'
 extern const tMSCDMedia usbmsc_media_functions_dummy;
 
+int _usblib_debug_mode = 0;
+
 static void initialize(intptr_t unused) {
 	// Initialize USB OTG
     HWREG(CFGCHIP2_USBPHYCTRL) &= ~SYSCFG_CFGCHIP2_USB0OTGMODE;
