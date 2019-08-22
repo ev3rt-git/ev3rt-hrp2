@@ -1,8 +1,8 @@
 //*****************************************************************************
 //
-// usb_bulk_structs.c - Data structures defining the mass storage USB device.
+// usb_serial_structs.c - Data structures defining this CDC USB device.
 //
-// Copyright (c) 2009-2010 Texas Instruments Incorporated.  All rights reserved.
+// Copyright (c) 2008-2010 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
 // 
 // Texas Instruments (TI) is supplying this software for use solely and
@@ -18,19 +18,19 @@
 // CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
 // DAMAGES, FOR ANY REASON WHATSOEVER.
 // 
-// This is part of revision 6288 of the DK-LM3S9B96 Firmware Package.
+// This is part of AM1808 Sitaraware firmware package, modified and reused from revision 6288 
+// of the DK-LM3S9B96 Firmware Package.
 //
 //*****************************************************************************
 
 #include "hw_types.h"
 #include "usb.h"
 #include "usblib.h"
+#include "usbcdc.h"
 #include "usb-ids.h"
-//#include "usbdevice.h"
-#include "usbdmsc.h"
-#include "usb_msc_structs.h"
-//#include "usbdmscglue.h"
-#include "cppi41dma.h"
+#include "usbdevice.h"
+#include "usbdcdc.h"
+#include "usb_serial_structs.h"
 
 //*****************************************************************************
 //
@@ -64,11 +64,10 @@ static const unsigned char g_pManufacturerString[] =
 //*****************************************************************************
 static const unsigned char g_pProductString[] =
 {
-    (19 + 1) * 2,
+    2 + (16 * 2),
     USB_DTYPE_STRING,
-    'M', 0, 'a', 0, 's', 0, 's', 0, ' ', 0, 'S', 0, 't', 0, 'o', 0, 'r', 0,
-    'a', 0, 'g', 0, 'e', 0, ' ', 0, 'D', 0, 'e', 0, 'v', 0, 'i', 0, 'c', 0,
-    'e', 0
+    'V', 0, 'i', 0, 'r', 0, 't', 0, 'u', 0, 'a', 0, 'l', 0, ' ', 0,
+    'C', 0, 'O', 0, 'M', 0, ' ', 0, 'P', 0, 'o', 0, 'r', 0, 't', 0
 };
 
 //*****************************************************************************
@@ -78,23 +77,23 @@ static const unsigned char g_pProductString[] =
 //*****************************************************************************
 static const unsigned char g_pSerialNumberString[] =
 {
-    (8 + 1) * 2,
+    2 + (8 * 2),
     USB_DTYPE_STRING,
     '1', 0, '2', 0, '3', 0, '4', 0, '5', 0, '6', 0, '7', 0, '8', 0
 };
 
 //*****************************************************************************
 //
-// The data interface description string.
+// The control interface description string.
 //
 //*****************************************************************************
-const unsigned char g_pDataInterfaceString[] =
+const unsigned char g_pControlInterfaceString[] =
 {
-    (19 + 1) * 2,
+    2 + (21 * 2),
     USB_DTYPE_STRING,
-    'B', 0, 'u', 0, 'l', 0, 'k', 0, ' ', 0, 'D', 0, 'a', 0, 't', 0,
-    'a', 0, ' ', 0, 'I', 0, 'n', 0, 't', 0, 'e', 0, 'r', 0, 'f', 0,
-    'a', 0, 'c', 0, 'e', 0
+    'A', 0, 'C', 0, 'M', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 't', 0,
+    'r', 0, 'o', 0, 'l', 0, ' ', 0, 'I', 0, 'n', 0, 't', 0, 'e', 0,
+    'r', 0, 'f', 0, 'a', 0, 'c', 0, 'e', 0
 };
 
 //*****************************************************************************
@@ -104,11 +103,12 @@ const unsigned char g_pDataInterfaceString[] =
 //*****************************************************************************
 static const unsigned char g_pConfigString[] =
 {
-    (23 + 1) * 2,
+    2 + (26 * 2),
     USB_DTYPE_STRING,
-    'B', 0, 'u', 0, 'l', 0, 'k', 0, ' ', 0, 'D', 0, 'a', 0, 't', 0,
-    'a', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 'f', 0, 'i', 0, 'g', 0,
-    'u', 0, 'r', 0, 'a', 0, 't', 0, 'i', 0, 'o', 0, 'n', 0
+    'S', 0, 'e', 0, 'l', 0, 'f', 0, ' ', 0, 'P', 0, 'o', 0, 'w', 0,
+    'e', 0, 'r', 0, 'e', 0, 'd', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0,
+    'f', 0, 'i', 0, 'g', 0, 'u', 0, 'r', 0, 'a', 0, 't', 0, 'i', 0,
+    'o', 0, 'n', 0
 };
 
 //*****************************************************************************
@@ -122,7 +122,7 @@ static const unsigned char * const g_pStringDescriptors[] =
     g_pManufacturerString,
     g_pProductString,
     g_pSerialNumberString,
-    g_pDataInterfaceString,
+    g_pControlInterfaceString,
     g_pConfigString
 };
 
@@ -131,85 +131,87 @@ static const unsigned char * const g_pStringDescriptors[] =
 
 //*****************************************************************************
 //
-// The bulk device initialization and customization structures. In this case,
-// we are using USBBuffers between the bulk device class driver and the
+// CDC device callback function prototypes.
+//
+//*****************************************************************************
+unsigned int UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent,
+                        unsigned int ulMsgValue, void *pvMsgData);
+unsigned int UsbCdcTxHandler(void *pvCBData, unsigned int ulEvent,
+                        unsigned int ulMsgValue, void *pvMsgData);
+unsigned int UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
+                             unsigned int ulMsgValue, void *pvMsgData);
+
+//*****************************************************************************
+//
+// The CDC device initialization and customization structures. In this case,
+// we are using USBBuffers between the CDC device class driver and the
 // application code. The function pointers and callback data values are set
 // to insert a buffer in each of the data channels, transmit and receive.
 //
-// With the buffer in place, the bulk channel callback is set to the relevant
+// With the buffer in place, the CDC channel callback is set to the relevant
 // channel function and the callback data is set to point to the channel
 // instance data. The buffer, in turn, has its callback set to the application
-// function and the callback data set to our bulk instance structure.
+// function and the callback data set to our CDC instance structure.
 //
 //*****************************************************************************
-tMSCInstance g_sMSCInstance;
+tCDCSerInstance g_sCDCInstance;
 
-// From 'usbmsc_dri.c'
-unsigned int usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgParam, void *pvMsgData);
+extern const tUSBBuffer g_sTxBuffer;
+extern const tUSBBuffer g_sRxBuffer;
 
-tUSBDMSCDevice g_sMSCDevice =
+const tUSBDCDCDevice g_sCDCDevice =
 {
-    //
-    // Vendor ID.
-    //
     USB_VID_STELLARIS,
-
-    //
-    // Product ID.
-    //
-    USB_PID_MSC,
-
-    //
-    // Vendor Information.
-    //
-    "TI      ",
-
-    //
-    // Product Identification.
-    //
-    "Mass Storage    ",
-
-    //
-    // Revision.
-    //
-    "1.00",
-    500,
+    USB_PID_SERIAL,
+    0,
     USB_CONF_ATTR_SELF_PWR,
+    UsbCdcControlHandler,
+    (void *)&g_sCDCDevice,
+    USBBufferEventCallback,
+    (void *)&g_sRxBuffer,
+    USBBufferEventCallback,
+    (void *)&g_sTxBuffer,
     g_pStringDescriptors,
     NUM_STRING_DESCRIPTORS,
-	{ },
-	usbmsc_event_callback,
-    &g_sMSCInstance
+    &g_sCDCInstance
 };
 
 //*****************************************************************************
 //
-// The size of the transmit and receive buffers used.
+// Receive buffer (from the USB perspective).
 //
 //*****************************************************************************
-#define MSC_BUFFER_SIZE 512
+unsigned char g_pcUSBRxBuffer[UART_BUFFER_SIZE];
+unsigned char g_pucRxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE];
+const tUSBBuffer g_sRxBuffer =
+{
+    false,                          // This is a receive buffer.
+    UsbCdcRxHandler,                // pfnCallback
+    (void *)&g_sCDCDevice,          // Callback data is our device pointer.
+    USBDCDCPacketRead,              // pfnTransfer
+    USBDCDCRxPacketAvailable,       // pfnAvailable
+    (void *)&g_sCDCDevice,          // pvHandle
+    g_pcUSBRxBuffer,                // pcBuffer
+    UART_BUFFER_SIZE,               // ulBufferSize
+    g_pucRxBufferWorkspace          // pvWorkspace
+};
 
 //*****************************************************************************
 //
-// DMA Configuration.
+// Transmit buffer (from the USB perspective).
 //
 //*****************************************************************************
-
-#if defined(DMA_MODE)
-	endpointInfo epInfo[]=
-	{
-		{
-			USB_EP_TO_INDEX(USB_EP_1),
-			CPDMA_DIR_RX,
-			CPDMA_MODE_SET_TRANSPARENT,
-		},
-		
-		{
-			USB_EP_TO_INDEX(USB_EP_1),
-			CPDMA_DIR_TX,
-			CPDMA_MODE_SET_GRNDIS,
-		}
-
-	};
-#endif
-
+unsigned char g_pcUSBTxBuffer[UART_BUFFER_SIZE];
+unsigned char g_pucTxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE];
+const tUSBBuffer g_sTxBuffer =
+{
+    true,                           // This is a transmit buffer.
+    UsbCdcTxHandler,                // pfnCallback
+    (void *)&g_sCDCDevice,          // Callback data is our device pointer.
+    USBDCDCPacketWrite,             // pfnTransfer
+    USBDCDCTxPacketAvailable,       // pfnAvailable
+    (void *)&g_sCDCDevice,          // pvHandle
+    g_pcUSBTxBuffer,                // pcBuffer
+    UART_BUFFER_SIZE,               // ulBufferSize
+    g_pucTxBufferWorkspace          // pvWorkspace
+};

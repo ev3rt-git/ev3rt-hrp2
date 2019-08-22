@@ -19,6 +19,8 @@ LDFLAGS += -L$(SRCDIR)/modules/usblib/Release
 APPL_LIBS += -lusblib
 	
 APPL_COBJS += usbmsc_dri.o \
+    usb_serial_structs.o \
+    usb_dev_serial.o \
 	usbmsc_media_functions.o \
 	usb_dev_msc.o \
 	usb_msc_structs.o
