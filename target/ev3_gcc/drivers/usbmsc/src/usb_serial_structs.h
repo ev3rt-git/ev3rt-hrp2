@@ -36,10 +36,12 @@
 //*****************************************************************************
 #define UART_BUFFER_SIZE 256
 
-extern unsigned int RxHandler(void *pvCBData, unsigned int ulEvent,
+extern unsigned int UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent,
                                unsigned int ulMsgValue, void *pvMsgData);
-extern unsigned int TxHandler(void *pvlCBData, unsigned int ulEvent,
+extern unsigned int UsbCdcTxHandler(void *pvlCBData, unsigned int ulEvent,
                                unsigned int ulMsgValue, void *pvMsgData);
+extern unsigned int UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
+                             unsigned int ulMsgValue, void *pvMsgData);
 
 extern const tUSBBuffer g_sTxBuffer;
 extern const tUSBBuffer g_sRxBuffer;

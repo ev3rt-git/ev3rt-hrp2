@@ -70,6 +70,10 @@ static void initialize(intptr_t unused) {
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_FORCE_DEVICE;  // Force USB device operation
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_REFFREQ_24MHZ; // 24 MHz OSCIN
 
+    if (*ev3rt_usb_cdc_mode) {
+        extern int usb_cdc_main(void);
+        usb_cdc_main();
+    } else {
     g_sMSCDevice.sMediaFunctions = usbmsc_media_functions_dummy;
     USBDMSCInit(0, (tUSBDMSCDevice *)&g_sMSCDevice);
 
@@ -82,6 +86,7 @@ static void initialize(intptr_t unused) {
 							g_sMSCDevice.psPrivateData->ucOUTEndpoint);
 	}
 #endif
+    }
 
 //    dump_usbmsc();
 

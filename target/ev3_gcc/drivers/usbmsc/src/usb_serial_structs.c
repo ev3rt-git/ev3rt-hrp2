@@ -87,7 +87,7 @@ static const unsigned char g_pSerialNumberString[] =
 // The control interface description string.
 //
 //*****************************************************************************
-const unsigned char g_pControlInterfaceString[] =
+static const unsigned char g_pControlInterfaceString[] =
 {
     2 + (21 * 2),
     USB_DTYPE_STRING,
@@ -131,18 +131,6 @@ static const unsigned char * const g_pStringDescriptors[] =
 
 //*****************************************************************************
 //
-// CDC device callback function prototypes.
-//
-//*****************************************************************************
-unsigned int UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent,
-                        unsigned int ulMsgValue, void *pvMsgData);
-unsigned int UsbCdcTxHandler(void *pvCBData, unsigned int ulEvent,
-                        unsigned int ulMsgValue, void *pvMsgData);
-unsigned int UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
-                             unsigned int ulMsgValue, void *pvMsgData);
-
-//*****************************************************************************
-//
 // The CDC device initialization and customization structures. In this case,
 // we are using USBBuffers between the CDC device class driver and the
 // application code. The function pointers and callback data values are set
@@ -154,7 +142,7 @@ unsigned int UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
 // function and the callback data set to our CDC instance structure.
 //
 //*****************************************************************************
-tCDCSerInstance g_sCDCInstance;
+static tCDCSerInstance g_sCDCInstance;
 
 extern const tUSBBuffer g_sTxBuffer;
 extern const tUSBBuffer g_sRxBuffer;

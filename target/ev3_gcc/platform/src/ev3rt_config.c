@@ -19,6 +19,7 @@ const int    *ev3rt_bluetooth_pan_disabled;
 const char   *ev3rt_bluetooth_ip_address;
 const bool_t *ev3rt_sensor_port_1_disabled;
 const bool_t *ev3rt_usb_auto_terminate_app;
+const bool_t *ev3rt_usb_cdc_mode;
 const bool_t *ev3rt_low_battery_warning;
 int           DEBUG_UART;
 int           SIO_PORT_DEFAULT;
@@ -87,6 +88,17 @@ void ev3rt_load_configuration() {
 	auto_term_app = ini_getbool("USB", "AutoTerminateApp", true, CFG_INI_FILE);
 	ini_putl("USB", "AutoTerminateApp", auto_term_app, CFG_INI_FILE);
 	ev3rt_usb_auto_terminate_app = &auto_term_app;
+
+	static bool_t cdc_mode;
+    char usb_mode[5];
+	ini_gets("USB", "Mode", NULL, usb_mode, 5, CFG_INI_FILE);
+    if (!strcasecmp("CDC", usb_mode)) {
+        cdc_mode = true;
+    } else { // Use MSC mode by default
+        cdc_mode = false;
+	    ini_puts("USB", "Mode", "MSC", CFG_INI_FILE);
+    }
+	ev3rt_usb_cdc_mode = &cdc_mode;
 }
 
 #if !defined(BUILD_LOADER)

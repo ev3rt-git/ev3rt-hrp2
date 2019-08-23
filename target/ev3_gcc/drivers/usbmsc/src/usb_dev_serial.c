@@ -23,8 +23,8 @@
 //
 //*****************************************************************************
 //#include "ustdlib.h"
-#include "uart.h"
-#include "hw_uart.h"
+//#include "uart.h"
+//#include "hw_uart.h"
 #include "hw_types.h"
 #include "psc.h"
 //#include "interrupt.h"
@@ -117,6 +117,7 @@ unsigned int g_ulUARTRxErrors = 0;
 //*****************************************************************************
 #define DEFAULT_BIT_RATE        115200
 
+#if 0 // TODO: LCD is unused -- ertl-liyixiao
 //*****************************************************************************
 //
 // Flag indicating whether or not we are currently sending a Break condition.
@@ -124,7 +125,6 @@ unsigned int g_ulUARTRxErrors = 0;
 //*****************************************************************************
 static tBoolean g_bSendingBreak = false;
 
-#if 0 // TODO: LCD is unused -- ertl-liyixiao
 //*****************************************************************************
 //
 // Global system tick counter
@@ -170,8 +170,6 @@ tDisplay g_sSHARP480x272x16Display;
 unsigned short palette_32b[PALETTE_SIZE/2] = 
 			{0x4000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u,
 			 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u, 0x0000u};
-#endif
-
 //*****************************************************************************
 //
 // Flags used to pass commands from interrupt context to the main loop.
@@ -180,6 +178,7 @@ unsigned short palette_32b[PALETTE_SIZE/2] =
 #define COMMAND_STATUS_UPDATE   0x00000002
 volatile unsigned int g_ulFlags = 0;
 char *g_pcStatus;
+#endif
 
 //*****************************************************************************
 //
@@ -193,10 +192,14 @@ static volatile tBoolean g_bUSBConfigured = false;
 // Internal function prototypes.
 //
 //*****************************************************************************
+#if 0 // TODO: UART is unused -- ertl-liyixiao
 static void USBUARTPrimeTransmit(unsigned int ulBase);
 static void CheckForSerialStateChange(const tUSBDCDCDevice *psDevice, int lErrors);
+#endif
 static void SetControlLineState(unsigned short usState);
+#if 0 // TODO: UART is unused -- ertl-liyixiao
 static tBoolean SetLineCoding(tLineCoding *psLineCoding);
+#endif
 static void GetLineCoding(tLineCoding *psLineCoding);
 static void SendBreak(tBoolean bSend);
 
@@ -216,6 +219,7 @@ __error__(char *pcFilename, unsigned int ulLine)
 #endif
 
 
+#if 0 // TODO: unused -- ertl-liyixiao
 //*****************************************************************************
 //
 // This function is called whenever serial data is received from the UART.
@@ -414,7 +418,6 @@ USBUARTPrimeTransmit(unsigned int ulBase)
     }
 } 
 
-#if 0 // TODO: unused -- ertl-liyixiao
 //*****************************************************************************
 //
 // Interrupt handler for the system tick counter.
@@ -529,6 +532,7 @@ SetControlLineState(unsigned short usState)
     //
 }
 
+#if 0 // TODO: UART is unused -- ertl-liyixiao
 //*****************************************************************************
 //
 // Set the communication parameters to use on the UART.
@@ -674,6 +678,7 @@ SetLineCoding(tLineCoding *psLineCoding)
     //
     return(bRetcode);
 }
+#endif
 
 //*****************************************************************************
 //
@@ -704,6 +709,7 @@ GetLineCoding(tLineCoding *psLineCoding)
 static void
 SendBreak(tBoolean bSend)
 {
+#if 0 // TODO: UART is unused -- ertl-liyixiao
     //
     // Are we being asked to start or stop the break condition?
     //
@@ -723,6 +729,7 @@ SendBreak(tBoolean bSend)
         UARTBreakCtl(USB_UART_BASE, true);
         g_bSendingBreak = true;
     }
+#endif
 }
 
 //*****************************************************************************
@@ -746,7 +753,9 @@ unsigned int
 UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
                unsigned int ulMsgValue, void *pvMsgData)
 {
+#if 0 // TODO: LCD is unused -- ertl-liyixiao
     unsigned char ulIntsOff;
+#endif
 
     //
     // Which event are we being asked to process?
@@ -764,10 +773,12 @@ UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
             //
             USBBufferFlush(&g_sTxBuffer);
             USBBufferFlush(&g_sRxBuffer);
+#if 0 // TODO: LCD is unused -- ertl-liyixiao
             ulIntsOff = IntDisable();
             g_pcStatus = "Host connected.";
             g_ulFlags |= COMMAND_STATUS_UPDATE;
 			IntEnable(ulIntsOff);
+#endif
             break;
 
         //
@@ -775,10 +786,12 @@ UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
         //
         case USB_EVENT_DISCONNECTED:
             g_bUSBConfigured = false;
+#if 0 // TODO: LCD is unused -- ertl-liyixiao
             ulIntsOff = IntDisable();
             g_pcStatus = "Host disconnected.";
             g_ulFlags |= COMMAND_STATUS_UPDATE;
          	IntEnable(ulIntsOff);
+#endif
             break;
 
         //
@@ -792,7 +805,9 @@ UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
         // Set the current serial communication parameters.
         //
         case USBD_CDC_EVENT_SET_LINE_CODING:
+#if 0 // TODO: UART is unused -- ertl-liyixiao
             SetLineCoding(pvMsgData);
+#endif
             break;
 
         //
@@ -920,12 +935,25 @@ UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue,
         //
         case USB_EVENT_RX_AVAILABLE:
         {
+#if 0 // TODO: LCD is unused -- ertl-liyixiao
             //
             // Feed some characters into the UART TX FIFO and enable the
             // interrupt so we are told when there is more space.
             //
               USBUARTPrimeTransmit(USB_UART_BASE);
               UARTIntEnable(USB_UART_BASE, UART_INT_TX_EMPTY);
+#endif
+            unsigned int ulRead;
+            unsigned char ucChar;
+            //
+            // Get characters from the buffer.
+            //
+            while ( (ulRead = USBBufferRead((tUSBBuffer *)&g_sRxBuffer, &ucChar, 1)) ) {
+                if (USBBufferSpaceAvailable((tUSBBuffer *)&g_sTxBuffer)) {
+            		USBBufferWrite((tUSBBuffer *)&g_sTxBuffer, &ucChar, 1);
+				}
+                //syslog(LOG_EMERG, "USB CDC Recv: '%c'", ucChar);
+            }
             break;
         }
 
@@ -1275,7 +1303,7 @@ UpdateBufferMeter(tContext *psContext, unsigned int ulFullPercent, int lX,
 //
 //*****************************************************************************
 int
-main(void)
+usb_cdc_main(void)
 {
 #if 0 // TODO: LCD is unused -- ertl-liyixiao
 	unsigned int ulTxCount;
@@ -1283,12 +1311,12 @@ main(void)
 	tRectangle sRect;
 	char pcBuffer[16];
 	unsigned int ulFullness;	
-#endif
 	unsigned int intFlags = 0;
     unsigned int config = 0;
 	unsigned char Intstatus;
     unsigned int i;
 	unsigned char *src, *dest;
+#endif
 
 	//
 	// Not configured initially.
@@ -1520,4 +1548,6 @@ main(void)
         }
     }
 #endif
+    return 0;
 }
+

@@ -39,52 +39,6 @@
 #include <kernel.h>
 #include <t_syslog.h>
 
-// Wrappers from  'AM1808_StarterWare_1_00_03_03/system_config/armv5/gcc/cpu.c'
-
-/*
-**
-** Wrapper function for the IRQ status
-**
-*/
-static inline unsigned int CPUIntStatus(void)
-{
-    unsigned int stat;
-
-    /* IRQ and FIQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    and     %[result], r0, #0xC0" : [result] "=r" (stat));
-    
-    return stat;
-}
-
-/*
-**
-** Wrapper function for the IRQ disable function
-**
-*/
-static inline void CPUirqd(void)
-{
-    /* Disable IRQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    orr     r0, #0x80\n\t"
-        "    msr     CPSR, r0");
-}
-
-/*
-**
-** Wrapper function for the IRQ enable function
-**
-*/
-static inline void CPUirqe(void)
-{
-    /* Enable IRQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    bic     r0, #0x80\n\t"
-        "    msr     CPSR, r0");
-}
-
-// End of Wrappers from  'AM1808_StarterWare_1_00_03_03/system_config/armv5/gcc/cpu.c'
-
 /**
  * \brief    Enables the system interrupt in AINTC. The interrupt will be
  *           processed only if it is enabled in AINTC
@@ -446,8 +400,6 @@ void IntAINTCInit(void)
     HWREG(SOC_AINTC_0_REGS + AINTC_VSR) = 0x0;
 }
 
-#endif
-
 /**
  * \brief  Enables the processor IRQ only in CPSR. Makes the processor to 
  *         respond to IRQs.  This does not affect the set of interrupts 
@@ -483,8 +435,6 @@ void IntMasterIRQDisable(void)
     CPUirqd();
 }
 
-#if 0
-
 /**
  * \brief  Enables the processor FIQ only in CPSR. Makes the processor to 
  *         respond to FIQs.  This does not affect the set of interrupts 
@@ -519,8 +469,6 @@ void IntMasterFIQDisable(void)
     CPUfiqd();
 }
 
-#endif
-
 /**
  * \brief   Returns the status of the interrupts FIQ and IRQ.
  *
@@ -534,9 +482,7 @@ unsigned int IntMasterStatusGet(void)
 {
     return CPUIntStatus();
 }
-
-
-
+#endif
 
 /**
  * \brief Read and save the stasus and Disables the processor IRQ .
@@ -552,15 +498,9 @@ unsigned int IntMasterStatusGet(void)
 
 unsigned char IntDisable(void)
 {
-	unsigned char status;
-
-	/* Reads the current status.*/
-	status = (IntMasterStatusGet() & 0xFF);
-
-	/* Disable the Interrupts.*/
-	IntMasterIRQDisable();
-
-	return status;
+    SIL_PRE_LOC;
+    SIL_LOC_INT();
+    return TOPPERS_irq_fiq_mask;
 }
 
 /**
@@ -577,11 +517,8 @@ unsigned char IntDisable(void)
 
 void IntEnable(unsigned char  status)
 {
-  
-	if((status & 0x80) == 0) 
-	{
-		IntMasterIRQEnable();
-	} 
+    uint32_t TOPPERS_irq_fiq_mask = status;
+    SIL_UNL_INT();
 }
 
 
