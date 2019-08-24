@@ -169,7 +169,7 @@ const tUSBDCDCDevice g_sCDCDevice =
 // Receive buffer (from the USB perspective).
 //
 //*****************************************************************************
-unsigned char g_pcUSBRxBuffer[UART_BUFFER_SIZE];
+unsigned char g_pcUSBRxBuffer[USB_CDC_BUFFER_SIZE];
 unsigned char g_pucRxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE];
 const tUSBBuffer g_sRxBuffer =
 {
@@ -180,7 +180,7 @@ const tUSBBuffer g_sRxBuffer =
     USBDCDCRxPacketAvailable,       // pfnAvailable
     (void *)&g_sCDCDevice,          // pvHandle
     g_pcUSBRxBuffer,                // pcBuffer
-    UART_BUFFER_SIZE,               // ulBufferSize
+    USB_CDC_BUFFER_SIZE,            // ulBufferSize
     g_pucRxBufferWorkspace          // pvWorkspace
 };
 
@@ -189,7 +189,7 @@ const tUSBBuffer g_sRxBuffer =
 // Transmit buffer (from the USB perspective).
 //
 //*****************************************************************************
-unsigned char g_pcUSBTxBuffer[UART_BUFFER_SIZE];
+unsigned char g_pcUSBTxBuffer[USB_CDC_BUFFER_SIZE];
 unsigned char g_pucTxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE];
 const tUSBBuffer g_sTxBuffer =
 {
@@ -200,6 +200,6 @@ const tUSBBuffer g_sTxBuffer =
     USBDCDCTxPacketAvailable,       // pfnAvailable
     (void *)&g_sCDCDevice,          // pvHandle
     g_pcUSBTxBuffer,                // pcBuffer
-    UART_BUFFER_SIZE,               // ulBufferSize
+    USB_CDC_BUFFER_SIZE,            // ulBufferSize
     g_pucTxBufferWorkspace          // pvWorkspace
 };

@@ -41,6 +41,7 @@
 
 #include <t_syslog.h>
 #include "platform.h"
+#include "kernel_cfg.h"
 
 //*****************************************************************************
 //
@@ -73,6 +74,7 @@ static void initialize(intptr_t unused) {
     if (*ev3rt_usb_cdc_mode) {
         extern int usb_cdc_main(void);
         usb_cdc_main();
+        act_tsk(USB_CDC_TSK);
     } else {
     g_sMSCDevice.sMediaFunctions = usbmsc_media_functions_dummy;
     USBDMSCInit(0, (tUSBDMSCDevice *)&g_sMSCDevice);
@@ -86,6 +88,7 @@ static void initialize(intptr_t unused) {
 							g_sMSCDevice.psPrivateData->ucOUTEndpoint);
 	}
 #endif
+        act_tsk(USB_MSC_TSK);
     }
 
 //    dump_usbmsc();

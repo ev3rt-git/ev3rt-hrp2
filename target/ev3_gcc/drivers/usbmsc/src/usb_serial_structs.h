@@ -34,7 +34,7 @@
 // a maxmum-sized USB packet.
 //
 //*****************************************************************************
-#define UART_BUFFER_SIZE 256
+#define USB_CDC_BUFFER_SIZE (2048)
 
 extern unsigned int UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent,
                                unsigned int ulMsgValue, void *pvMsgData);

@@ -20,7 +20,7 @@
 #include "kernel_cfg.h"
 #include "platform.h"
 
-#define TMIN_NORMAL_FD (SIO_PORT_SPP_MASTER_TEST_FILENO + 1)
+#define TMIN_NORMAL_FD (SIO_USB_CDC_FILENO + 1)
 #define TMAX_NORMAL_FD (TMIN_NORMAL_FD + TMAX_FD_NUM - 1)
 
 /**
@@ -92,6 +92,9 @@ get_portid(int fd) {
 
 	case SIO_PORT_SPP_MASTER_TEST_FILENO:
 		return SIO_PORT_SPP_MASTER_TEST;
+
+	case SIO_USB_CDC_FILENO:
+		return SIO_PORT_USB_CDC;
 	}
 
 	return 0;

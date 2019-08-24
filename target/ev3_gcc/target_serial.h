@@ -6,7 +6,7 @@
 #define SIO_RDY_SND    1U        /* 送信可能コールバック */
 #define SIO_RDY_RCV    2U        /* 受信通知コールバック */
 
-#define TNUM_PORT 4
+#define TNUM_PORT 5
 
 /**
  * ID of SIO ports
@@ -15,6 +15,7 @@
 #define SIO_PORT_BT   (2)
 #define SIO_PORT_LCD  (3)
 #define SIO_PORT_SPP_MASTER_TEST  (4)
+#define SIO_PORT_USB_CDC  (5)
 
 #define SERIAL_RCV_BUFSZ2 (4096 * 2)
 #define SERIAL_SND_BUFSZ2 (4096 * 2)
@@ -94,5 +95,7 @@ extern void bt_fetch_snd_buf(uint8_t **buf, uint32_t *bytes);
  * Send a character to the LCD console
  */
 void lcd_console_send_character(char c);
+
+extern void cdc_sio_cyc(intptr_t exinf);
 
 #endif /* TOPPERS_MACRO_ONLY */

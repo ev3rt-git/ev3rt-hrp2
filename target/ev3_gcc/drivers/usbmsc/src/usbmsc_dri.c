@@ -75,7 +75,7 @@ unsigned int usbmsc_event_callback(void *pvCBData, unsigned int ulEvent, unsigne
     return 0;
 }
 
-void usbmsc_task(intptr_t unused) {
+void usb_msc_task(intptr_t unused) {
 	g_sMSCDeviceInfo.sCallbacks.pfnSuspendHandler = g_sMSCDeviceInfo.sCallbacks.pfnDisconnectHandler;
 
 	ER ercd;

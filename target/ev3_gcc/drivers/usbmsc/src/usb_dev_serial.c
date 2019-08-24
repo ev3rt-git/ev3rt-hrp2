@@ -31,17 +31,6 @@
 #include "soc_AM1808.h"
 #include "hw_psc_AM1808.h"
 //#include "evmAM1808.h"
-#if 0
-#include "raster.h"
-#include "grlib.h"
-#include "widget.h"
-#include "canvas.h"
-#include "pushbutton.h"
-#include "checkbox.h"
-#include "radiobutton.h"
-#include "container.h"
-#include "slider.h"
-#endif
 #include "usblib.h"
 #include "usbcdc.h"
 #include "usbdcdc.h"
@@ -51,6 +40,11 @@
 #include "usb_serial_structs.h"
 #include "hw_usb.h"
 //#include "delay.h"
+
+#include "csl.h"
+#include "kernel_cfg.h"
+#include "syssvc/serial.h"
+
 
 //*****************************************************************************
 //
@@ -779,6 +773,7 @@ UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
             g_ulFlags |= COMMAND_STATUS_UPDATE;
 			IntEnable(ulIntsOff);
 #endif
+			iset_flg(USBMSC_EVT_FLG, USBMSC_EVT_CONNECT);
             break;
 
         //
@@ -792,6 +787,7 @@ UsbCdcControlHandler(void *pvCBData, unsigned int ulEvent,
             g_ulFlags |= COMMAND_STATUS_UPDATE;
          	IntEnable(ulIntsOff);
 #endif
+			iset_flg(USBMSC_EVT_FLG, USBMSC_EVT_DISCONN);
             break;
 
         //
@@ -943,6 +939,7 @@ UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue,
               USBUARTPrimeTransmit(USB_UART_BASE);
               UARTIntEnable(USB_UART_BASE, UART_INT_TX_EMPTY);
 #endif
+#if 0
             unsigned int ulRead;
             unsigned char ucChar;
             //
@@ -954,6 +951,7 @@ UsbCdcRxHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue,
 				}
                 //syslog(LOG_EMERG, "USB CDC Recv: '%c'", ucChar);
             }
+#endif
             break;
         }
 
@@ -1549,5 +1547,41 @@ usb_cdc_main(void)
     }
 #endif
     return 0;
+}
+
+bool_t usb_cdc_send_buffer_is_free() {
+    return (USBBufferSpaceAvailable((tUSBBuffer *)&g_sTxBuffer) > 0);
+}
+
+bool_t usb_cdc_recv_buffer_has_data() {
+    return (USBBufferDataAvailable(&g_sRxBuffer) > 0);
+}
+
+bool_t usb_cdc_send_char(uint8_t c) {
+    return (USBBufferWrite((tUSBBuffer *)&g_sTxBuffer, &c, 1) > 0);
+}
+
+intptr_t usb_cdc_recv_char() {
+    uint8_t c;
+    if (USBBufferRead((tUSBBuffer *)&g_sRxBuffer, &c, 1) > 0) {
+        return c;
+    }
+    return (-1);
+}
+
+void usb_cdc_task(intptr_t unused) {
+    g_sCDCSerDeviceInfo.sCallbacks.pfnSuspendHandler = g_sCDCSerDeviceInfo.sCallbacks.pfnDisconnectHandler;
+
+	FLGPTN flgptn;
+	while (1) {
+		SVC_PERROR(wai_flg(USBMSC_EVT_FLG, USBMSC_EVT_CONNECT, TWF_ANDW, &flgptn));
+        SVC_PERROR(serial_opn_por(SIO_PORT_USB_CDC));
+        SVC_PERROR(serial_ctl_por(SIO_PORT_USB_CDC, (IOCTL_NULL)));
+        syslog(LOG_NOTICE, "USB CDC is connected.");
+
+		SVC_PERROR(wai_flg(USBMSC_EVT_FLG, USBMSC_EVT_DISCONN, TWF_ANDW, &flgptn));
+        SVC_PERROR(serial_cls_por(SIO_PORT_USB_CDC));
+        syslog(LOG_NOTICE, "USB CDC is disconnected.");
+	}
 }
 

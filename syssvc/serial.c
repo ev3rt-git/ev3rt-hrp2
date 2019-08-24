@@ -110,9 +110,24 @@ static char	snd_buffer4[SERIAL_SND_BUFSZ4];
 
 #endif /* TNUM_PORT >= 4 */
 
-#if TNUM_PORT >= 5
-#error Serial interface driver supports up to 4 ports.
+#if TNUM_PORT >= 5						/* ポート5に関する定義 */
+
+#ifndef SERIAL_RCV_BUFSZ5
+#define	SERIAL_RCV_BUFSZ5	256			/* ポート5の受信バッファサイズ */
+#endif /* SERIAL_RCV_BUFSZ5 */
+
+#ifndef SERIAL_SND_BUFSZ5
+#define	SERIAL_SND_BUFSZ5	256			/* ポート5の送信バッファサイズ */
+#endif /* SERIAL_SND_BUFSZ5 */
+
+static char	rcv_buffer5[SERIAL_RCV_BUFSZ5];
+static char	snd_buffer5[SERIAL_SND_BUFSZ5];
+
 #endif /* TNUM_PORT >= 5 */
+
+#if TNUM_PORT >= 6
+#error Serial interface driver supports up to 4 ports.
+#endif /* TNUM_PORT >= 6 */
 
 /*
  *  フロー制御に関連する定数とマクロ
@@ -154,6 +169,11 @@ static const SPINIB spinib_table[TNUM_PORT] = {
 	  SERIAL_RCV_BUFSZ4, rcv_buffer4,
 	  SERIAL_SND_BUFSZ4, snd_buffer4 },
 #endif /* TNUM_PORT >= 4 */
+#if TNUM_PORT >= 5
+	{ SERIAL_RCV_SEM5, SERIAL_SND_SEM5,
+	  SERIAL_RCV_BUFSZ5, rcv_buffer5,
+	  SERIAL_SND_BUFSZ5, snd_buffer5 },
+#endif /* TNUM_PORT >= 5 */
 };
 
 /*

@@ -15,6 +15,7 @@
 #include "serial_mod.h"
 #include "kernel_cfg.h"
 #include "target_serial_dbsio.h"
+#include "csl.h"
 
 static intptr_t uart_opn_por(intptr_t);
 static intptr_t uart_cls_por(intptr_t);
@@ -36,6 +37,13 @@ static intptr_t lcd_snd_chr(intptr_t);
 static intptr_t lcd_rcv_chr(intptr_t);
 static intptr_t lcd_ena_cbr(intptr_t);
 static intptr_t lcd_dis_cbr(intptr_t);
+
+static intptr_t cdc_opn_por(intptr_t);
+static intptr_t cdc_cls_por(intptr_t);
+static intptr_t cdc_snd_chr(intptr_t);
+static intptr_t cdc_rcv_chr(intptr_t);
+static intptr_t cdc_ena_cbr(intptr_t);
+static intptr_t cdc_dis_cbr(intptr_t);
 
 typedef intptr_t (*func_t)(intptr_t);
 
@@ -60,6 +68,7 @@ static SIOPCB siopcb_table[TNUM_PORT] = {
     {(intptr_t)NULL, false, false, bt_opn_por, bt_cls_por, bt_snd_chr, bt_rcv_chr, bt_ena_cbr, bt_dis_cbr},
 	{(intptr_t)NULL, false, false, lcd_opn_por, lcd_cls_por, lcd_snd_chr, lcd_rcv_chr, lcd_ena_cbr, lcd_dis_cbr},
     {(intptr_t)&dbsio_spp_master_test, true, false, NULL, NULL, NULL, NULL, NULL, NULL}, // SIO_PORT_TEST_SPP_MASTER
+    {(intptr_t)NULL, false, false, cdc_opn_por, cdc_cls_por, cdc_snd_chr, cdc_rcv_chr, cdc_ena_cbr, cdc_dis_cbr},
 };
 
 /*
@@ -439,3 +448,65 @@ static intptr_t lcd_snd_chr(intptr_t c) {
     lcd_console_send_character(c);
 	return true;
 }
+
+/**
+ * SIO driver for USB CDC
+ */
+
+static SIOPCB*  cdc_siopcb = &siopcb_table[INDEX_SIOP(SIO_PORT_USB_CDC)];
+static bool_t   cdc_snd_cbr_ena = false;
+static bool_t   cdc_rcv_cbr_ena = false;
+
+static intptr_t cdc_opn_por(intptr_t unused) {
+    return true;
+}
+
+static intptr_t cdc_cls_por(intptr_t exinf) {
+    SIOPCB *p_siopcb = (SIOPCB*)exinf;
+
+    p_siopcb->openflag = false;
+
+    return true;
+}
+
+static intptr_t cdc_rcv_chr(intptr_t unused) {
+    return usb_cdc_recv_char();
+}
+
+static intptr_t cdc_ena_cbr(intptr_t cbrtn)
+{
+	switch (cbrtn) {
+	case SIO_RDY_SND:
+		cdc_snd_cbr_ena = true;
+		break;
+	case SIO_RDY_RCV:
+		cdc_rcv_cbr_ena = true;
+		break;
+	}
+    return true;
+}
+
+static intptr_t cdc_dis_cbr(intptr_t cbrtn)
+{
+	switch (cbrtn) {
+	case SIO_RDY_SND:
+		cdc_snd_cbr_ena = false;
+		break;
+	case SIO_RDY_RCV:
+		cdc_rcv_cbr_ena = false;
+		break;
+	}
+    return true;
+}
+
+void cdc_sio_cyc(/*ID siopid*/intptr_t unused) {
+	if (cdc_rcv_cbr_ena && usb_cdc_recv_buffer_has_data())
+		sio_irdy_rcv(cdc_siopcb->exinf);
+	if (cdc_snd_cbr_ena && usb_cdc_send_buffer_is_free())
+		sio_irdy_snd(cdc_siopcb->exinf);
+}
+
+static intptr_t cdc_snd_chr(intptr_t c) {
+    return usb_cdc_send_char(c);
+}
+
