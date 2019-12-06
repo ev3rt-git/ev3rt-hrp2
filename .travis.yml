@@ -8,7 +8,7 @@ before_install:
 # -  sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
  - sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa -y # -qq is for travis CI
  - sudo apt-get update
- - sudo apt-get install gcc-arm-embedded u-boot-tools libboost1.55-all-dev --allow-unauthenticated -y
+ - sudo apt-get install gcc-arm-embedded u-boot-tools lib32stdc++6 --allow-unauthenticated -y
 
 before_script:
 # - cd ev3rt-git/ev3rt-hrp2-base
